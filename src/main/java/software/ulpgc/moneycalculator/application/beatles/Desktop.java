@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.awt.BorderLayout.NORTH;
 import static java.awt.FlowLayout.CENTER;
 import static java.awt.Image.SCALE_SMOOTH;
 
@@ -34,10 +35,11 @@ public class Desktop extends JFrame {
         this.setLocationRelativeTo(null);
         this.setResizable(false);
         this.setLayout(new BorderLayout());
-        this.getContentPane().add(panel());
+        this.getContentPane().add(modeButtons(), NORTH);
+        this.getContentPane().add(currentCurrenciesMode());
     }
 
-    private JPanel panel() {
+    private JPanel currentCurrenciesMode() {
         JPanel panel = new JPanel();
         panel.setLayout(new FlowLayout(CENTER));
         panel.add(inputAmount = amountInput());
@@ -47,6 +49,23 @@ public class Desktop extends JFrame {
         panel.add(outputCurrency = currencySelector());
         panel.add(calculateButton());
         return panel;
+    }
+
+    private JPanel modeButtons() {
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.add(currentCurrenciesModeButton());
+        panel.add(historyModeButton());
+        return panel;
+    }
+
+    private JButton currentCurrenciesModeButton() {
+        JButton button = new JButton("Current Currencies Mode");
+        button.addActionListener(e -> currentCurrenciesMode());
+        return button;
+    }
+
+    private JButton historyModeButton() {
+        return new JButton("History Mode");
     }
 
     private Component calculateButton() {
