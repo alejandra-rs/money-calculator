@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WebService {
-    private static final String ApiUrl = "https://v6.exchangerate-api.com/v6/API-KEY/".replace("API-KEY", apiKey());
+    private static final String ExchangeRateApiUrl = "https://v6.exchangerate-api.com/v6/API-KEY/".replace("API-KEY", apiKey());
+    private static final String HistoricalRatesApiUrl = "https://api.frankfurter.dev/v1/";
 
     public static class CurrencyLoader implements software.ulpgc.moneycalculator.architecture.io.CurrencyLoader {
 
@@ -71,7 +72,7 @@ public class WebService {
         }
 
         private static URLConnection createConnection() throws IOException {
-            URL url = new URL((ApiUrl + "codes"));
+            URL url = new URL((ExchangeRateApiUrl + "codes"));
             return url.openConnection();
         }
     }
@@ -84,7 +85,7 @@ public class WebService {
                     LocalDate.now(),
                     from,
                     to,
-                    readConversionRate(new URL(ApiUrl + "pair/" + from.code() + "/" + to.code()))
+                    readConversionRate(new URL(ExchangeRateApiUrl + "pair/" + from.code() + "/" + to.code()))
                 );
             } catch (IOException e) {
                 throw new RuntimeException(e);
