@@ -9,11 +9,13 @@ import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static java.awt.FlowLayout.CENTER;
+import static java.awt.Image.SCALE_SMOOTH;
 
 public class Desktop extends JFrame {
     private final Map<String, Command> commands;
@@ -40,6 +42,7 @@ public class Desktop extends JFrame {
         panel.setLayout(new FlowLayout(CENTER));
         panel.add(inputAmount = amountInput());
         panel.add(inputCurrency = currencySelector());
+        panel.add(swapCurrenciesButton());
         panel.add(outputAmount = amountOutput());
         panel.add(outputCurrency = currencySelector());
         panel.add(calculateButton());
@@ -50,6 +53,31 @@ public class Desktop extends JFrame {
         JButton button = new JButton("Exchange");
         button.addActionListener(e -> commands.get("exchange").execute());
         return button;
+    }
+
+    private JButton swapCurrenciesButton() {
+        JButton jButton = buttonWith(Main.class.getResource("/swap.png"));
+        jButton.addActionListener(e -> swapCurrencies());
+        return jButton;
+    }
+
+    private JButton buttonWith(URL resource) {
+        return buttonWith(new ImageIcon(resource));
+    }
+
+    private static JButton buttonWith(ImageIcon imageIcon) {
+        return buttonWith(imageIcon.getImage().getScaledInstance(20, 20, SCALE_SMOOTH));
+    }
+
+    private static JButton buttonWith(Image image) {
+        return new JButton(new ImageIcon(image));
+    }
+
+    private void swapCurrencies() {
+        int inputIndex = inputCurrency.getSelectedIndex();
+        inputCurrency.setSelectedIndex(outputCurrency.getSelectedIndex());
+        outputCurrency.setSelectedIndex(inputIndex);
+        outputAmount.setText("");
     }
 
     private JTextField amountInput() {
