@@ -8,6 +8,8 @@ import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
 import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
 import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
 
+import java.time.LocalDate;
+
 public class ExchangeMoneyCommand implements Command {
     private final MoneyDialog moneyDialog;
     private final CurrencyDialog currencyDialog;
@@ -26,7 +28,7 @@ public class ExchangeMoneyCommand implements Command {
         Money money = moneyDialog.get();
         Currency currency = currencyDialog.get();
 
-        ExchangeRate exchangeRate = exchangeRateStore.load(money.currency(), currency);
+        ExchangeRate exchangeRate = exchangeRateStore.load(money.currency(), currency, LocalDate.now());
 
         Money result = new Money(money.amount() * exchangeRate.rate(), currency);
         moneyDisplay.show(result);
