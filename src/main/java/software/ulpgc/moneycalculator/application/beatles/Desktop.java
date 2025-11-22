@@ -1,15 +1,18 @@
 package software.ulpgc.moneycalculator.application.beatles;
 
+import com.github.lgooddatepicker.components.DatePicker;
 import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
 import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
+import software.ulpgc.moneycalculator.architecture.ui.DateDialog;
 import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
 import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,7 @@ public class Desktop extends JFrame {
     private JComboBox<Currency> inputCurrency;
     private JTextField outputAmount;
     private JComboBox<Currency> outputCurrency;
+    private DatePicker inputDate;
 
     public Desktop(Stream<Currency> currencies) throws HeadlessException {
         this.commands = new HashMap<>();
@@ -36,20 +40,13 @@ public class Desktop extends JFrame {
         this.setLocationRelativeTo(null);
         this.setResizable(false);
         this.setLayout(new BorderLayout());
-        this.getContentPane().add(modeButtons(), NORTH);
-        this.getContentPane().add(currentCurrenciesMode());
+        currentCurrenciesMode();
     }
 
-    private JPanel currentCurrenciesMode() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new FlowLayout(CENTER));
-        panel.add(inputAmount = amountInput());
-        panel.add(inputCurrency = currencySelector());
-        panel.add(swapCurrenciesButton());
-        panel.add(outputAmount = amountOutput());
-        panel.add(outputCurrency = currencySelector());
-        panel.add(calculateButton());
-        return panel;
+    private void clear() {
+        this.getContentPane().removeAll();
+        this.getContentPane().revalidate();
+        this.getContentPane().repaint();
     }
 
     private JPanel modeButtons() {
@@ -66,7 +63,38 @@ public class Desktop extends JFrame {
     }
 
     private JButton historyModeButton() {
-        return new JButton("History Mode");
+        JButton button = new JButton("History Mode");
+        button.addActionListener(e -> historyMode());
+        return button;
+    }
+
+    private void currentCurrenciesMode() {
+        clear();
+        this.getContentPane().add(modeButtons(), NORTH);
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout(CENTER));
+        panel.add(inputAmount = amountInput());
+        panel.add(inputCurrency = currencySelector());
+        panel.add(swapCurrenciesButton());
+        panel.add(outputAmount = amountOutput());
+        panel.add(outputCurrency = currencySelector());
+        panel.add(calculateButton());
+        this.getContentPane().add(panel);
+    }
+
+    private void historyMode() {
+        clear();
+        this.getContentPane().add(modeButtons(), NORTH);
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout(CENTER));
+        panel.add(inputDate = dateChooser());
+        panel.add(inputAmount = amountInput());
+        panel.add(inputCurrency = currencySelector());
+        panel.add(swapCurrenciesButton());
+        panel.add(outputAmount = amountOutput());
+        panel.add(outputCurrency = currencySelector());
+        panel.add(calculateButton());
+        this.getContentPane().add(panel);
     }
 
     private Component calculateButton() {
@@ -118,6 +146,9 @@ public class Desktop extends JFrame {
         return currencies.toArray(new Currency[0]);
     }
 
+    public static DatePicker dateChooser() {
+        return new DatePicker();
+    }
 
     public void addCommand(String name, Command command) {
         this.commands.put(name, command);
@@ -135,6 +166,10 @@ public class Desktop extends JFrame {
         return money -> outputAmount.setText(money.amount() + "");
     }
 
+    public DateDialog inputDateDialog() {
+        return () -> inputDate.getDate();
+    }
+    
     private double inputAmount() {
         return toDouble(inputAmount.getText());
     }
