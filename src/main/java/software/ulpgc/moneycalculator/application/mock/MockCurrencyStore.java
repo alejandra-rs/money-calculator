@@ -1,14 +1,14 @@
 package software.ulpgc.moneycalculator.application.mock;
 
-import software.ulpgc.moneycalculator.architecture.io.CurrencyLoader;
+import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 
-import java.util.List;
+import java.util.stream.Stream;
 
-public class MockCurrencyLoader implements CurrencyLoader {
+public class MockCurrencyStore implements CurrencyStore {
     @Override
-    public List<Currency> loadAll() {
-        return List.of(
+    public Stream<Currency> currencies() {
+        return Stream.of(
                 new Currency("USD", "USA"),
                 new Currency("EUR", "Europa")
         );

@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.awt.BorderLayout.NORTH;
 import static java.awt.FlowLayout.CENTER;
@@ -26,9 +27,9 @@ public class Desktop extends JFrame {
     private JTextField outputAmount;
     private JComboBox<Currency> outputCurrency;
 
-    public Desktop(List<Currency> currencies) throws HeadlessException {
+    public Desktop(Stream<Currency> currencies) throws HeadlessException {
         this.commands = new HashMap<>();
-        this.currencies = currencies;
+        this.currencies = currencies.toList();
         this.setTitle("Money Calculator");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(800,600);

@@ -1,6 +1,6 @@
 package software.ulpgc.moneycalculator.architecture.control;
 
-import software.ulpgc.moneycalculator.architecture.io.ExchangeRateLoader;
+import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 import software.ulpgc.moneycalculator.architecture.model.Money;
@@ -11,13 +11,13 @@ import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
 public class ExchangeMoneyCommand implements Command {
     private final MoneyDialog moneyDialog;
     private final CurrencyDialog currencyDialog;
-    private final ExchangeRateLoader exchangeRateLoader;
+    private final ExchangeRateStore exchangeRateStore;
     private final MoneyDisplay moneyDisplay;
 
-    public ExchangeMoneyCommand(MoneyDialog moneyDialog, CurrencyDialog currencyDialog, ExchangeRateLoader exchangeRateLoader, MoneyDisplay moneyDisplay) {
+    public ExchangeMoneyCommand(MoneyDialog moneyDialog, CurrencyDialog currencyDialog, ExchangeRateStore exchangeRateStore, MoneyDisplay moneyDisplay) {
         this.moneyDialog = moneyDialog;
         this.currencyDialog = currencyDialog;
-        this.exchangeRateLoader = exchangeRateLoader;
+        this.exchangeRateStore = exchangeRateStore;
         this.moneyDisplay = moneyDisplay;
     }
 
@@ -26,7 +26,7 @@ public class ExchangeMoneyCommand implements Command {
         Money money = moneyDialog.get();
         Currency currency = currencyDialog.get();
 
-        ExchangeRate exchangeRate = exchangeRateLoader.load(money.currency(), currency);
+        ExchangeRate exchangeRate = exchangeRateStore.load(money.currency(), currency);
 
         Money result = new Money(money.amount() * exchangeRate.rate(), currency);
         moneyDisplay.show(result);

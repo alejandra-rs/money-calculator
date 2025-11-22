@@ -2,8 +2,8 @@ package software.ulpgc.moneycalculator.architecture.io;
 
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 
-import java.util.List;
+import java.util.stream.Stream;
 
-public interface CurrencyLoader {
-    List<Currency> loadAll();
+public interface CurrencyStore {
+    Stream<Currency> currencies();
 }

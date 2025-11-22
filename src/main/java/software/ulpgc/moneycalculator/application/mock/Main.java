@@ -14,11 +14,11 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        List<Currency> currencies = new MockCurrencyLoader().loadAll();
+        List<Currency> currencies = new MockCurrencyStore().currencies().toList();
         Command command = new ExchangeMoneyCommand(
                 moneyDialog(currencies),
                 currencyDialog(currencies),
-                new MockExchangeRateLoader(),
+                new MockExchangeRateStore(),
                 moneyDisplay()
         );
         command.execute();

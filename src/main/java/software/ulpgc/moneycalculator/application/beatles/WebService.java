@@ -15,41 +15,42 @@ import java.net.URLConnection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class WebService {
     private static final String ExchangeRateApiUrl = "https://v6.exchangerate-api.com/v6/API-KEY/".replace("API-KEY", apiKey());
     private static final String HistoricalRatesApiUrl = "https://api.frankfurter.dev/v1/";
 
-    public static class CurrencyLoader implements software.ulpgc.moneycalculator.architecture.io.CurrencyLoader {
+    public static class CurrencyStore implements software.ulpgc.moneycalculator.architecture.io.CurrencyStore {
 
         @Override
-        public List<Currency> loadAll() {
+        public Stream<Currency> currencies() {
             try {
                 return readCurrencies();
             } catch (IOException e) {
-                return List.of();
+                return Stream.of();
             }
         }
 
-        private List<Currency> readCurrencies() throws IOException {
+        private Stream<Currency> readCurrencies() throws IOException {
             try (InputStream is = openInputStream(createConnection())) {
                 return readCurrenciesWith(jsonIn(is));
             }
         }
 
-        private List<Currency> readCurrenciesWith(String json) {
+        private Stream<Currency> readCurrenciesWith(String json) {
             return readCurrenciesWith(jsonObjectIn(json));
         }
 
-        private List<Currency> readCurrenciesWith(JsonObject jsonObject) {
+        private Stream<Currency> readCurrenciesWith(JsonObject jsonObject) {
             return readCurrenciesWith(jsonObject.get("supported_codes").getAsJsonArray());
         }
 
-        private List<Currency> readCurrenciesWith(JsonArray jsonArray) {
+        private Stream<Currency> readCurrenciesWith(JsonArray jsonArray) {
             List<Currency> list = new ArrayList<>();
             for (JsonElement item : jsonArray)
                 list.add(readCurrencyWith(item.getAsJsonArray()));
-            return list;
+            return list.stream();
         }
 
         private Currency readCurrencyWith(JsonArray tuple) {
@@ -77,7 +78,7 @@ public class WebService {
         }
     }
 
-    public static class ExchangeRateLoader implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateLoader {
+    public static class ExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
         @Override
         public ExchangeRate load(Currency from, Currency to) {
             try {
