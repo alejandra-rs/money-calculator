@@ -80,7 +80,7 @@ public class WebService {
 
     public static class ExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
         @Override
-        public ExchangeRate load(Currency from, Currency to) {
+        public ExchangeRate load(Currency from, Currency to, LocalDate date) {
             try {
                 return new ExchangeRate(
                     LocalDate.now(),

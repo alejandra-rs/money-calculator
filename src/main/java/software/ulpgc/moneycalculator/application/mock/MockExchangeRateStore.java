@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 public class MockExchangeRateStore implements ExchangeRateStore {
     @Override
-    public ExchangeRate load(Currency from, Currency to) {
+    public ExchangeRate load(Currency from, Currency to, LocalDate date) {
         return new ExchangeRate(LocalDate.now(), from, to, 1.25);
     }
 }
