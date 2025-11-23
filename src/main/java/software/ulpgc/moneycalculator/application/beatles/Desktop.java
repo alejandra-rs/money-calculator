@@ -24,16 +24,17 @@ import static java.awt.Image.SCALE_SMOOTH;
 
 public class Desktop extends JFrame {
     private final Map<String, Command> commands;
-    private final List<Currency> currencies;
+    private final List<Currency> currencies, historicalCurrencies;
     private JTextField inputAmount;
     private JComboBox<Currency> inputCurrency;
     private JTextField outputAmount;
     private JComboBox<Currency> outputCurrency;
     private DatePicker inputDate;
 
-    public Desktop(Stream<Currency> currencies) throws HeadlessException {
+    public Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) throws HeadlessException {
         this.commands = new HashMap<>();
         this.currencies = currencies.toList();
+        this.historicalCurrencies = historicalCurrencies.toList();
         this.setTitle("Money Calculator");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(800,600);
@@ -89,17 +90,23 @@ public class Desktop extends JFrame {
         panel.setLayout(new FlowLayout(CENTER));
         panel.add(inputDate = dateChooser());
         panel.add(inputAmount = amountInput());
-        panel.add(inputCurrency = currencySelector());
+        panel.add(inputCurrency = historicalCurrencySelector());
         panel.add(swapCurrenciesButton());
         panel.add(outputAmount = amountOutput());
-        panel.add(outputCurrency = currencySelector());
-        panel.add(calculateButton());
+        panel.add(outputCurrency = historicalCurrencySelector());
+        panel.add(historicalCalculateButton());
         this.getContentPane().add(panel);
     }
 
-    private Component calculateButton() {
+    private JButton calculateButton() {
         JButton button = new JButton("Exchange");
         button.addActionListener(e -> commands.get("exchange").execute());
+        return button;
+    }
+
+    private JButton historicalCalculateButton() {
+        JButton button = new JButton("Exchange");
+        button.addActionListener(e -> commands.get("historicalExchange").execute());
         return button;
     }
 
@@ -140,6 +147,10 @@ public class Desktop extends JFrame {
 
     private JComboBox<Currency> currencySelector() {
         return new JComboBox<>(toArray(currencies));
+    }
+
+    private JComboBox<Currency> historicalCurrencySelector() {
+        return new JComboBox<>(toArray(historicalCurrencies));
     }
 
     private Currency[] toArray(List<Currency> currencies) {

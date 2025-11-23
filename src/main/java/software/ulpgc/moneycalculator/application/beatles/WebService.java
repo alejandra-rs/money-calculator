@@ -4,17 +4,22 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
+import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class WebService {
@@ -78,6 +83,59 @@ public class WebService {
         }
     }
 
+    public static class HistoricalCurrencyStore implements software.ulpgc.moneycalculator.architecture.io.CurrencyStore {
+
+        @Override
+        public Stream<Currency> currencies() {
+            try {
+                return readCurrencies();
+            } catch (IOException e) {
+                return Stream.of();
+            }
+        }
+
+        private Stream<Currency> readCurrencies() throws IOException {
+            try (InputStream is = openInputStream(createConnection())) {
+                return readCurrenciesWith(jsonIn(is));
+            }
+        }
+
+        private Stream<Currency> readCurrenciesWith(String json) {
+            return readCurrenciesWith(jsonObjectIn(json));
+        }
+
+
+        private Stream<Currency> readCurrenciesWith(JsonObject jsonObject) {
+            return jsonObject.entrySet().stream().map(this::readCurrency);
+        }
+
+        private Currency readCurrency(Map.Entry<String, JsonElement> entry) {
+            return readCurrencyWith(entry.getKey(), entry.getValue().getAsString());
+        }
+
+        private Currency readCurrencyWith(String code, String country) {
+            return new Currency(code, country);
+        }
+
+
+        private static String jsonIn(InputStream is) throws IOException {
+            return new String(is.readAllBytes());
+        }
+
+        private static JsonObject jsonObjectIn(String json) {
+            return new Gson().fromJson(json, JsonObject.class);
+        }
+
+        private InputStream openInputStream(URLConnection connection) throws IOException {
+            return connection.getInputStream();
+        }
+
+        private static URLConnection createConnection() throws IOException {
+            URL url = new URL((HistoricalRatesApiUrl + "currencies"));
+            return url.openConnection();
+        }
+    }
+
     public static class ExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
         @Override
         public ExchangeRate load(Currency from, Currency to, LocalDate date) {
@@ -109,6 +167,44 @@ public class WebService {
 
         private double readConversionRate(JsonObject object) {
             return object.get("conversion_rate").getAsDouble();
+        }
+
+    }
+
+    public static class HistoricalExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
+
+        @Override
+        public ExchangeRate load(Currency from, Currency to, LocalDate date) {
+            try {
+                return new ExchangeRate(
+                        date,
+                        from,
+                        to,
+                        readConversionRate(new URL(HistoricalRatesApiUrl + date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "?base=" + from.code() + "&symbols=" + to.code()))
+                );
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private double readConversionRate(URL url) throws IOException {
+            return readConversionRate(url.openConnection());
+        }
+
+        private double readConversionRate(URLConnection connection) throws IOException {
+            try (InputStream inputStream = connection.getInputStream()) {
+                return readConversionRate(new String(new BufferedInputStream(inputStream).readAllBytes()));
+            }
+        }
+
+        private double readConversionRate(String json) {
+            return readConversionRate(new Gson().fromJson(json, JsonObject.class));
+        }
+
+        private double readConversionRate(JsonObject object) {
+            return object.get("rates").getAsJsonObject()
+                    .entrySet().iterator().next()
+                    .getValue().getAsDouble();
         }
 
     }
