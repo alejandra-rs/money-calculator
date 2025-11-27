@@ -209,6 +209,55 @@ public class WebService {
 
     }
 
+    public static class ExchangeRateSeriesStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateSeriesStore {
+
+        @Override
+        public Stream<ExchangeRate> exchangeRatesBetween(Currency from, Currency to, LocalDate start, LocalDate end) {
+            try {
+                return ratesIn(new URL(HistoricalRatesApiUrl + start + ".." + end +
+                        "?base=" + from.code() + "&symbols=" + to.code()))
+                        .map(e -> createExchangeRateWith(from, to, e));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private Stream<Map.Entry<String, JsonElement>> ratesIn(URL url) throws IOException {
+            return ratesIn(url.openConnection());
+        }
+
+        private Stream<Map.Entry<String, JsonElement>> ratesIn(URLConnection urlConnection) {
+            try (InputStream inputStream = urlConnection.getInputStream()) {
+                return ratesIn(new String(new BufferedInputStream(inputStream).readAllBytes()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private Stream<Map.Entry<String, JsonElement>> ratesIn(String json) {
+            return ratesIn(new Gson().fromJson(json, JsonObject.class));
+        }
+
+        private double doubleIn(JsonObject jsonObject) {
+            return jsonObject.entrySet().iterator().next().getValue().getAsDouble();
+        }
+
+
+        private ExchangeRate createExchangeRateWith(Currency from, Currency to, Map.Entry<String, JsonElement> e) {
+            return new ExchangeRate(
+                    LocalDate.parse(e.getKey()),
+                    from,
+                    to,
+                    doubleIn(e.getValue().getAsJsonObject())
+            );
+        }
+
+        private Stream<Map.Entry<String, JsonElement>> ratesIn(JsonObject jsonObject) {
+            return jsonObject.get("rates").getAsJsonObject().entrySet().stream();
+        }
+
+    }
+
     private static String apiKey() {
         try (InputStream is = WebService.class.getResourceAsStream("/api-key.txt")) {
             return new String(new BufferedInputStream(is).readAllBytes());
