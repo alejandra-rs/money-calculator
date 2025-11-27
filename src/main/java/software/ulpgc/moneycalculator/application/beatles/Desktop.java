@@ -4,15 +4,12 @@ import com.github.lgooddatepicker.components.DatePicker;
 import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
-import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.DateDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
+import software.ulpgc.moneycalculator.architecture.ui.*;
+import software.ulpgc.moneycalculator.architecture.viewmodel.LineChart;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +26,8 @@ public class Desktop extends JFrame {
     private JComboBox<Currency> inputCurrency;
     private JTextField outputAmount;
     private JComboBox<Currency> outputCurrency;
-    private DatePicker inputDate;
+    private DatePicker inputDate, inputStartDate, inputEndDate;
+    private final JPanel outputChart = new JPanel(new BorderLayout());
 
     public Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) throws HeadlessException {
         this.commands = new HashMap<>();
@@ -54,6 +52,7 @@ public class Desktop extends JFrame {
         JPanel panel = new JPanel(new FlowLayout());
         panel.add(currentCurrenciesModeButton());
         panel.add(historyModeButton());
+        panel.add(graphicsModeButton());
         return panel;
     }
 
@@ -66,6 +65,12 @@ public class Desktop extends JFrame {
     private JButton historyModeButton() {
         JButton button = new JButton("History Mode");
         button.addActionListener(e -> historyMode());
+        return button;
+    }
+
+    private JButton graphicsModeButton() {
+        JButton button = new JButton("Graphics Mode");
+        button.addActionListener(e -> graphicsMode());
         return button;
     }
 
@@ -96,6 +101,20 @@ public class Desktop extends JFrame {
         panel.add(outputCurrency = historicalCurrencySelector());
         panel.add(historicalCalculateButton());
         this.getContentPane().add(panel);
+    }
+
+    private void graphicsMode() {
+        clear();
+        this.getContentPane().add(modeButtons(), NORTH);
+        JPanel controls = new JPanel();
+        controls.add(inputStartDate = dateChooser());
+        controls.add(inputEndDate = dateChooser());
+        controls.add(inputCurrency = historicalCurrencySelector());
+        controls.add(swapCurrenciesButton());
+        controls.add(outputCurrency = historicalCurrencySelector());
+        controls.add(calculateButton());
+        outputChart.add(controls, NORTH);
+        this.getContentPane().add(outputChart);
     }
 
     private JButton calculateButton() {
@@ -169,7 +188,11 @@ public class Desktop extends JFrame {
         return () -> new Money(inputAmount(), inputCurrency());
     }
 
-    public CurrencyDialog currencyDialog() {
+    public CurrencyDialog inputCurrencyDialog() {
+        return this::inputCurrency;
+    }
+
+    public CurrencyDialog outputCurrencyDialog() {
         return this::outputCurrency;
     }
 
@@ -180,7 +203,25 @@ public class Desktop extends JFrame {
     public DateDialog inputDateDialog() {
         return () -> inputDate.getDate();
     }
-    
+
+    public DateDialog inputStartDateDialog() {
+        return () -> inputStartDate.getDate();
+    }
+
+    public DateDialog inputEndDateDialog() {
+        return () -> inputEndDate.getDate();
+    }
+
+    public LineChartDisplay lineChartDisplay() {
+        return this::display;
+    }
+
+    private void display(LineChart lineChart) {
+        outputChart.removeAll();
+        outputChart.add(TimeSeriesChartBuilder.with(lineChart).build(), BorderLayout.CENTER);
+        outputChart.revalidate();
+    }
+
     private double inputAmount() {
         return toDouble(inputAmount.getText());
     }
