@@ -27,7 +27,7 @@ public class Desktop extends JFrame {
     private JTextField outputAmount;
     private JComboBox<Currency> outputCurrency;
     private DatePicker inputDate, inputStartDate, inputEndDate;
-    private final JPanel outputChart = new JPanel(new BorderLayout());
+    private final JPanel outputChart = new JPanel();
 
     public Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) throws HeadlessException {
         this.commands = new HashMap<>();
