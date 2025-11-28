@@ -106,15 +106,17 @@ public class Desktop extends JFrame {
     private void graphicsMode() {
         clear();
         this.getContentPane().add(modeButtons(), NORTH);
+        JPanel panel = new JPanel(new BorderLayout());
         JPanel controls = new JPanel();
         controls.add(inputStartDate = dateChooser());
         controls.add(inputEndDate = dateChooser());
         controls.add(inputCurrency = historicalCurrencySelector());
         controls.add(swapCurrenciesButton());
         controls.add(outputCurrency = historicalCurrencySelector());
-        controls.add(calculateButton());
-        outputChart.add(controls, NORTH);
-        this.getContentPane().add(outputChart);
+        controls.add(generateGraphicsButton());
+        panel.add(controls, NORTH);
+        panel.add(outputChart);
+        this.getContentPane().add(panel);
     }
 
     private JButton calculateButton() {
@@ -126,6 +128,12 @@ public class Desktop extends JFrame {
     private JButton historicalCalculateButton() {
         JButton button = new JButton("Exchange");
         button.addActionListener(e -> commands.get("historicalExchange").execute());
+        return button;
+    }
+
+    private JButton generateGraphicsButton() {
+        JButton button = new JButton("Exchange");
+        button.addActionListener(e -> commands.get("viewHistory").execute());
         return button;
     }
 

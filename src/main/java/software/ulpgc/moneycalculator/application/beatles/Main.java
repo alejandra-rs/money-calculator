@@ -21,7 +21,7 @@ public class Main {
                 new WebService.HistoricalExchangeRateStore(),
                 desktop.moneyDisplay()
         ));
-        desktop.addCommand("viewHistoryCommand", new ViewHistoryCommand(
+        desktop.addCommand("viewHistory", new ViewHistoryCommand(
                 desktop.inputStartDateDialog(),
                 desktop.inputEndDateDialog(),
                 desktop.inputCurrencyDialog(),
