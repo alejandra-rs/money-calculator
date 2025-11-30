@@ -3,7 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+
 /src/main/resources/api-key.txt
+*.db
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
