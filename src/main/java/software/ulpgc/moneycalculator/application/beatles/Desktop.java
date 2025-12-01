@@ -29,7 +29,7 @@ public class Desktop extends JFrame {
     private DatePicker inputDate, inputStartDate, inputEndDate;
     private final JPanel outputChart = new JPanel(new BorderLayout());
 
-    public Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) throws HeadlessException {
+    public Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) throws Exception {
         this.commands = new HashMap<>();
         this.currencies = currencies.toList();
         this.historicalCurrencies = historicalCurrencies.toList();
@@ -39,6 +39,7 @@ public class Desktop extends JFrame {
         this.setLocationRelativeTo(null);
         this.setResizable(false);
         this.setLayout(new BorderLayout());
+        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
         currentCurrenciesMode();
     }
 

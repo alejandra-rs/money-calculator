@@ -4,28 +4,45 @@ import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.HistoricalExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
 import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
+import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
+import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 public class Main {
 
     private static final String databaseConnectionUrl = "jdbc:sqlite:";
     private static final String currencyDatabase = "currencies.db";
+    private static final String ratesDatabase = "rates.db";
 
     private static final String currenciesTable = "currencies";
     private static final String historicalCurrenciesTable = "historicalCurrencies";
+    private static final String ratesTable = "exchangeRates";
 
-    private static Connection connection;
+    private static Connection currencyConnection;
+    private static Connection ratesConnection;
 
-    public static void main(String[] args) throws SQLException {
+    private static Currency euro;
 
-        connection = DriverManager.getConnection(databaseConnectionUrl + currencyDatabase);
-        connection.setAutoCommit(false);
+    public static void main(String[] args) throws Exception {
+
+        currencyConnection = DriverManager.getConnection(databaseConnectionUrl + currencyDatabase);
+        ratesConnection = DriverManager.getConnection(databaseConnectionUrl + ratesDatabase);
+
+        currencyConnection.setAutoCommit(false);
+        ratesConnection.setAutoCommit(false);
+
+        euro = currenciesIn(historicalCurrenciesTable).currencies()
+                .filter(c -> c.code().equals("EUR"))
+                .findFirst().orElse(Currency.Null);
+
 
         Desktop desktop = new Desktop(currenciesIn(currenciesTable).currencies(),
                                       currenciesIn(historicalCurrenciesTable).currencies());
@@ -33,14 +50,14 @@ public class Main {
         desktop.addCommand("exchange", new ExchangeMoneyCommand(
                 desktop.moneyDialog(),
                 desktop.outputCurrencyDialog(),
-                new WebService.ExchangeRateStore(),
+                ratesIn(ratesConnection),
                 desktop.moneyDisplay()
         ));
         desktop.addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
                 desktop.moneyDialog(),
                 desktop.outputCurrencyDialog(),
                 desktop.inputDateDialog(),
-                new WebService.HistoricalExchangeRateStore(),
+                ratesIn(ratesConnection),
                 desktop.moneyDisplay()
         ));
         desktop.addCommand("viewHistory", new ViewHistoryCommand(
@@ -49,14 +66,9 @@ public class Main {
                 desktop.inputCurrencyDialog(),
                 desktop.outputCurrencyDialog(),
                 desktop.lineChartDisplay(),
-                new WebService.ExchangeRateSeriesStore()
+                new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
         ));
         desktop.setVisible(true);
-    }
-
-    private static CurrencyStore currenciesIn(String tableName) throws SQLException {
-        if (tableNonExistent(connection, tableName)) importCurrenciesInto(connection, tableName);
-        return new Database.CurrencyStore(connection, tableName);
     }
 
     private static boolean tableNonExistent(Connection connection, String tableName) throws SQLException {
@@ -77,6 +89,16 @@ public class Main {
         return url.substring(url.lastIndexOf(":") + 1);
     }
 
+    private static CurrencyStore currenciesIn(String tableName) throws SQLException {
+        if (tableNonExistent(currencyConnection, tableName)) importCurrenciesInto(currencyConnection, tableName);
+        return new Database.CurrencyStore(currencyConnection, tableName);
+    }
+
+    private static ExchangeRateStore ratesIn(Connection connection) throws SQLException {
+        importRatesIfNeeded(connection);
+        return new Database.ExchangeRateStore(connection, currenciesIn(currenciesTable));
+    }
+
     private static void importCurrenciesInto(Connection connection, String tableName) throws SQLException {
         Stream<Currency> currencies = tableName.equals(currenciesTable) ?
                 new WebService.CurrencyStore().currencies() :
@@ -84,4 +106,54 @@ public class Main {
         new Database.CurrencyRecorder(connection, tableName).record(currencies);
     }
 
+    private static void importRatesIfNeeded(Connection connection) throws SQLException {
+        if (tableNonExistent(connection, ratesTable)) importAllRatesSince(LocalDate.of(1999, 1, 1));
+        importMissingRates();
+    }
+
+    private static void importMissingRates() throws SQLException {
+        if (lastStoredDate().isEqual(LocalDate.now())) return;
+        importAllRatesSince(lastStoredDate());
+    }
+
+    private static void importAllRatesSince(LocalDate date) throws SQLException {
+        new Database.ExchangeRateRecorder(ratesConnection).record(Stream.concat(pastRatesSince(date), currentRates()));
+    }
+
+    private static Stream<ExchangeRate> pastRatesSince(LocalDate date) throws SQLException {
+        return currenciesIn(historicalCurrenciesTable).currencies()
+                .flatMap(c -> pastRatesSince(date, c));
+    }
+
+    private static Stream<ExchangeRate> pastRatesSince(LocalDate date, Currency c) {
+        return c.equals(euro) ? getEuroStream(date) :
+                new WebService.ExchangeRateSeriesStore()
+                        .exchangeRatesBetween(euro, c, date, LocalDate.now().minusDays(1));
+    }
+
+    private static Stream<ExchangeRate> getEuroStream(LocalDate date) {
+        return LongStream.range(0, LocalDate.now().toEpochDay() - date.toEpochDay())
+                .mapToObj(i -> new ExchangeRate(date.plusDays(i), euro, euro, 1.0));
+    }
+
+    private static Stream<ExchangeRate> currentRates() throws SQLException {
+        return currenciesIn(currenciesTable).currencies().map(c -> currentRates(euro, c));
+    }
+
+    private static ExchangeRate currentRates(Currency euro, Currency toCurrency) {
+        return new WebService.ExchangeRateStore().load(euro, toCurrency, LocalDate.now());
+    }
+
+    private static LocalDate lastStoredDate() throws SQLException {
+        return new Database.ExchangeRateStore(ratesConnection, currenciesIn(currenciesTable)).latestStoredDate();
+    }
+
+    private static void closeConnections() {
+        try {
+            currencyConnection.close();
+            ratesConnection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
