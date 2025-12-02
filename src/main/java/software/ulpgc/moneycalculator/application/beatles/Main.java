@@ -69,6 +69,8 @@ public class Main {
                 new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
         ));
         desktop.setVisible(true);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(Main::closeConnections));
     }
 
     private static boolean tableNonExistent(Connection connection, String tableName) throws SQLException {

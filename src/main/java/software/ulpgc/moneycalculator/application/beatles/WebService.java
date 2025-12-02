@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 
 public class WebService {
     private static final String ExchangeRateApiUrl = "https://v6.exchangerate-api.com/v6/API-KEY/".replace("API-KEY", apiKey());
+    private static final String JsonConversionRateKey = "conversion_rate";
+
     private static final String HistoricalRatesApiUrl = "https://api.frankfurter.dev/v1/";
 
     public static class CurrencyStore implements software.ulpgc.moneycalculator.architecture.io.CurrencyStore {
@@ -135,80 +137,64 @@ public class WebService {
             return url.openConnection();
         }
     }
-
+    
     public static class ExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
+
         @Override
         public ExchangeRate load(Currency from, Currency to, LocalDate date) {
             try {
-                return new ExchangeRate(
+                return date.isEqual(LocalDate.now()) ? currentExchangeRate(from, to) : historicalExchangeRate(date, from, to);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private ExchangeRate currentExchangeRate(Currency from, Currency to) throws IOException {
+            return new ExchangeRate(
                     LocalDate.now(),
                     from,
                     to,
                     readConversionRate(new URL(ExchangeRateApiUrl + "pair/" + from.code() + "/" + to.code()))
-                );
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            );
+        }
+
+        private ExchangeRate historicalExchangeRate(LocalDate date, Currency from, Currency to) throws IOException {
+            return new ExchangeRate(
+                    date,
+                    from,
+                    to,
+                    readConversionRate(new URL(HistoricalRatesApiUrl +
+                            date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) +
+                            "?base=" + from.code() +
+                            "&symbols=" + to.code()))
+            );
         }
 
         private double readConversionRate(URL url) throws IOException {
             return readConversionRate(url.openConnection());
         }
 
-        private double readConversionRate(URLConnection connection) throws IOException {
-            try (InputStream inputStream = connection.getInputStream()) {
+        private double readConversionRate(URLConnection urlConnection) throws IOException {
+            try (InputStream inputStream = urlConnection.getInputStream()) {
                 return readConversionRate(new String(new BufferedInputStream(inputStream).readAllBytes()));
             }
         }
 
-        private double readConversionRate(String json) {
-            return readConversionRate(new Gson().fromJson(json, JsonObject.class));
+        private double readConversionRate(String s) {
+            return readConversionRate(new Gson().fromJson(s, JsonObject.class));
         }
 
         private double readConversionRate(JsonObject object) {
-            return object.get("conversion_rate").getAsDouble();
-        }
-
-    }
-
-    public static class HistoricalExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
-
-        @Override
-        public ExchangeRate load(Currency from, Currency to, LocalDate date) {
-            try {
-                return new ExchangeRate(
-                        date,
-                        from,
-                        to,
-                        readConversionRate(new URL(HistoricalRatesApiUrl + date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "?base=" + from.code() + "&symbols=" + to.code()))
-                );
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private double readConversionRate(URL url) throws IOException {
-            return readConversionRate(url.openConnection());
-        }
-
-        private double readConversionRate(URLConnection connection) throws IOException {
-            try (InputStream inputStream = connection.getInputStream()) {
-                return readConversionRate(new String(new BufferedInputStream(inputStream).readAllBytes()));
-            }
-        }
-
-        private double readConversionRate(String json) {
-            return readConversionRate(new Gson().fromJson(json, JsonObject.class));
-        }
-
-        private double readConversionRate(JsonObject object) {
-            return object.get("rates").getAsJsonObject()
+            return isCurrentRate(object) ? object.get(JsonConversionRateKey).getAsDouble()
+                    : object.get("rates").getAsJsonObject()
                     .entrySet().iterator().next()
                     .getValue().getAsDouble();
         }
 
+        private boolean isCurrentRate(JsonObject object) {
+            return object.has(JsonConversionRateKey);
+        }
     }
-
     public static class ExchangeRateSeriesStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateSeriesStore {
 
         @Override
