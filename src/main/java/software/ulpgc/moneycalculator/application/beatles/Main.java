@@ -60,7 +60,7 @@ public class Main {
                 ratesIn(ratesConnection),
                 desktop.moneyDisplay()
         ));
-        desktop.addCommand("viewHistory", new ViewHistoryCommand(
+        desktop.addCommand("generateGraphics", new ViewHistoryCommand(
                 desktop.inputStartDateDialog(),
                 desktop.inputEndDateDialog(),
                 desktop.inputCurrencyDialog(),

@@ -9,6 +9,7 @@ import software.ulpgc.moneycalculator.architecture.viewmodel.LineChart;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.stream.Stream;
 import static java.awt.BorderLayout.NORTH;
 import static java.awt.FlowLayout.CENTER;
 import static java.awt.Image.SCALE_SMOOTH;
+import static software.ulpgc.moneycalculator.application.beatles.Desktop.ButtonFactory.createButton;
 
 public class Desktop extends JFrame {
     private final Map<String, Command> commands;
@@ -85,7 +87,7 @@ public class Desktop extends JFrame {
         panel.add(swapCurrenciesButton());
         panel.add(outputAmount = amountOutput());
         panel.add(outputCurrency = currencySelector());
-        panel.add(calculateButton());
+        panel.add(createButton("Exchange", e -> exchangeMoney()));
         this.getContentPane().add(panel);
     }
 
@@ -100,7 +102,7 @@ public class Desktop extends JFrame {
         panel.add(swapCurrenciesButton());
         panel.add(outputAmount = amountOutput());
         panel.add(outputCurrency = historicalCurrencySelector());
-        panel.add(historicalCalculateButton());
+        panel.add(createButton("Exchange", e -> exchangeHistoricalMoney()));
         this.getContentPane().add(panel);
     }
 
@@ -114,46 +116,38 @@ public class Desktop extends JFrame {
         controls.add(inputCurrency = historicalCurrencySelector());
         controls.add(swapCurrenciesButton());
         controls.add(outputCurrency = historicalCurrencySelector());
-        controls.add(generateGraphicsButton());
+        controls.add(createButton("Generate Graphics", e -> generateGraphics()));
         panel.add(controls, NORTH);
         panel.add(outputChart);
         this.getContentPane().add(panel);
     }
 
-    private JButton calculateButton() {
-        JButton button = new JButton("Exchange");
-        button.addActionListener(e -> commands.get("exchange").execute());
-        return button;
+    private void exchangeMoney() {
+        if (inputAmount() == 0) showErrorPanel("Please introduce a valid amount of money.");
+        else commands.get("exchange").execute();
     }
 
-    private JButton historicalCalculateButton() {
-        JButton button = new JButton("Exchange");
-        button.addActionListener(e -> commands.get("historicalExchange").execute());
-        return button;
+    private void exchangeHistoricalMoney() {
+        if (inputAmount() == 0) showErrorPanel("Please introduce a valid amount of money.");
+        else commands.get("historicalExchange").execute();
     }
 
-    private JButton generateGraphicsButton() {
-        JButton button = new JButton("Exchange");
-        button.addActionListener(e -> commands.get("viewHistory").execute());
-        return button;
+    private void generateGraphics() {
+        if (inputStartDate.getDate().isAfter(inputEndDate.getDate())) showErrorPanel("The start date must be chronologically before the end date.");
+        else commands.get("generateGraphics").execute();
+    }
+
+    private void showErrorPanel(String message) {
+        JOptionPane.showMessageDialog(
+                this,
+                message,
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
     }
 
     private JButton swapCurrenciesButton() {
-        JButton jButton = buttonWith(Main.class.getResource("/swap.png"));
-        jButton.addActionListener(e -> swapCurrencies());
-        return jButton;
-    }
-
-    private JButton buttonWith(URL resource) {
-        return buttonWith(new ImageIcon(resource));
-    }
-
-    private static JButton buttonWith(ImageIcon imageIcon) {
-        return buttonWith(imageIcon.getImage().getScaledInstance(20, 20, SCALE_SMOOTH));
-    }
-
-    private static JButton buttonWith(Image image) {
-        return new JButton(new ImageIcon(image));
+        return createButton(Main.class.getResource("/swap.png"), e -> swapCurrencies());
     }
 
     private void swapCurrencies() {
@@ -245,5 +239,32 @@ public class Desktop extends JFrame {
 
     private Currency outputCurrency() {
         return (Currency) outputCurrency.getSelectedItem();
+    }
+
+    public static class ButtonFactory {
+
+        public static JButton createButton(String text, ActionListener listener) {
+            JButton jButton = new JButton(text);
+            jButton.addActionListener(listener);
+            return jButton;
+        }
+
+        public static JButton createButton(URL imageResource, ActionListener listener) {
+            JButton jButton = buttonWith(imageResource);
+            jButton.addActionListener(listener);
+            return jButton;
+        }
+
+        private static JButton buttonWith(URL resource) {
+            return buttonWith(new ImageIcon(resource));
+        }
+
+        private static JButton buttonWith(ImageIcon imageIcon) {
+            return buttonWith(imageIcon.getImage().getScaledInstance(20, 20, SCALE_SMOOTH));
+        }
+
+        private static JButton buttonWith(Image image) {
+            return new JButton(new ImageIcon(image));
+        }
     }
 }
