@@ -103,8 +103,8 @@ public class Main {
 
     private static void importCurrenciesInto(Connection connection, String tableName) throws SQLException {
         Stream<Currency> currencies = tableName.equals(currenciesTable) ?
-                new WebService.CurrencyStore().currencies() :
-                new WebService.HistoricalCurrencyStore().currencies();
+                WebService.CurrencyStore.forCurrentCurrencies().currencies() :
+                WebService.CurrencyStore.forHistoricalCurrencies().currencies();
         new Database.CurrencyRecorder(connection, tableName).record(currencies);
     }
 

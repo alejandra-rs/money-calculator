@@ -30,84 +30,48 @@ public class WebService {
 
     public static class CurrencyStore implements software.ulpgc.moneycalculator.architecture.io.CurrencyStore {
 
-        @Override
-        public Stream<Currency> currencies() {
-            try {
-                return readCurrencies();
-            } catch (IOException e) {
-                return Stream.of();
-            }
+        private final String currenciesUrl;
+
+        private CurrencyStore(String apiUrl, String resource) {
+            this.currenciesUrl = apiUrl + resource;
         }
 
-        private Stream<Currency> readCurrencies() throws IOException {
-            try (InputStream is = openInputStream(createConnection())) {
-                return readCurrenciesWith(jsonIn(is));
-            }
+        public static CurrencyStore forCurrentCurrencies() {
+            return new CurrencyStore(ExchangeRateApiUrl, "codes");
         }
 
-        private Stream<Currency> readCurrenciesWith(String json) {
-            return readCurrenciesWith(jsonObjectIn(json));
+        public static CurrencyStore forHistoricalCurrencies() {
+            return new CurrencyStore(HistoricalRatesApiUrl, "currencies");
         }
-
-        private Stream<Currency> readCurrenciesWith(JsonObject jsonObject) {
-            return readCurrenciesWith(jsonObject.get("supported_codes").getAsJsonArray());
-        }
-
-        private Stream<Currency> readCurrenciesWith(JsonArray jsonArray) {
-            List<Currency> list = new ArrayList<>();
-            for (JsonElement item : jsonArray)
-                list.add(readCurrencyWith(item.getAsJsonArray()));
-            return list.stream();
-        }
-
-        private Currency readCurrencyWith(JsonArray tuple) {
-            return new Currency(
-                    tuple.get(0).getAsString(),
-                    tuple.get(1).getAsString()
-            );
-        }
-
-        private static String jsonIn(InputStream is) throws IOException {
-            return new String(is.readAllBytes());
-        }
-
-        private static JsonObject jsonObjectIn(String json) {
-            return new Gson().fromJson(json, JsonObject.class);
-        }
-
-        private InputStream openInputStream(URLConnection connection) throws IOException {
-            return connection.getInputStream();
-        }
-
-        private static URLConnection createConnection() throws IOException {
-            URL url = new URL((ExchangeRateApiUrl + "codes"));
-            return url.openConnection();
-        }
-    }
-
-    public static class HistoricalCurrencyStore implements software.ulpgc.moneycalculator.architecture.io.CurrencyStore {
 
         @Override
         public Stream<Currency> currencies() {
             try {
                 return readCurrencies();
-            } catch (IOException e) {
-                return Stream.of();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
 
-        private Stream<Currency> readCurrencies() throws IOException {
-            try (InputStream is = openInputStream(createConnection())) {
-                return readCurrenciesWith(jsonIn(is));
-            }
-        }
-
-        private Stream<Currency> readCurrenciesWith(String json) {
-            return readCurrenciesWith(jsonObjectIn(json));
+        public Stream<Currency> readCurrencies() throws IOException {
+            return readCurrenciesIn(RateReader.readJsonIn(new URL(currenciesUrl)));
         }
 
 
-        private Stream<Currency> readCurrenciesWith(JsonObject jsonObject) {
+        private Stream<Currency> readCurrenciesIn(JsonObject jsonObject) {
+            return readingCurrentCurrencies(jsonObject) ? parseCurrentCurrencies(jsonObject)
+                    : parseHistoricalCurrencies(jsonObject);
+        }
+
+        private boolean readingCurrentCurrencies(JsonObject jsonObject) {
+            return jsonObject.has("supported_codes");
+        }
+
+        private Stream<Currency> parseCurrentCurrencies(JsonObject jsonObject) {
+            return readCurrenciesIn(jsonObject.get("supported_codes").getAsJsonArray());
+        }
+
+        private Stream<Currency> parseHistoricalCurrencies(JsonObject jsonObject) {
             return jsonObject.entrySet().stream().map(this::readCurrency);
         }
 
@@ -115,126 +79,84 @@ public class WebService {
             return readCurrencyWith(entry.getKey(), entry.getValue().getAsString());
         }
 
+        private Stream<Currency> readCurrenciesIn(JsonArray jsonArray) {
+            List<Currency> list = new ArrayList<>();
+            for (JsonElement item : jsonArray)
+                list.add(readCurrencyWith(item.getAsJsonArray()));
+            return list.stream();
+        }
+
+        private Currency readCurrencyWith(JsonArray tuple) {
+            return readCurrencyWith(tuple.get(0).getAsString(),
+                    tuple.get(1).getAsString());
+        }
+
         private Currency readCurrencyWith(String code, String country) {
             return new Currency(code, country);
         }
-
-
-        private static String jsonIn(InputStream is) throws IOException {
-            return new String(is.readAllBytes());
-        }
-
-        private static JsonObject jsonObjectIn(String json) {
-            return new Gson().fromJson(json, JsonObject.class);
-        }
-
-        private InputStream openInputStream(URLConnection connection) throws IOException {
-            return connection.getInputStream();
-        }
-
-        private static URLConnection createConnection() throws IOException {
-            URL url = new URL((HistoricalRatesApiUrl + "currencies"));
-            return url.openConnection();
-        }
     }
-    
+
     public static class ExchangeRateStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore {
 
         @Override
         public ExchangeRate load(Currency from, Currency to, LocalDate date) {
             try {
-                return date.isEqual(LocalDate.now()) ? currentExchangeRate(from, to) : historicalExchangeRate(date, from, to);
+                return exchangeRateWith(date, from, to);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private ExchangeRate currentExchangeRate(Currency from, Currency to) throws IOException {
-            return new ExchangeRate(
-                    LocalDate.now(),
-                    from,
-                    to,
-                    readConversionRate(new URL(ExchangeRateApiUrl + "pair/" + from.code() + "/" + to.code()))
-            );
-        }
-
-        private ExchangeRate historicalExchangeRate(LocalDate date, Currency from, Currency to) throws IOException {
+        private ExchangeRate exchangeRateWith(LocalDate date, Currency from, Currency to) throws IOException {
             return new ExchangeRate(
                     date,
                     from,
                     to,
-                    readConversionRate(new URL(HistoricalRatesApiUrl +
-                            date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) +
-                            "?base=" + from.code() +
-                            "&symbols=" + to.code()))
+                    readConversionRate(RateReader.readJsonIn(date.isEqual(LocalDate.now()) ?
+                            currentUrl(from, to) :
+                            historicalUrl(date, from, to)))
             );
         }
 
-        private double readConversionRate(URL url) throws IOException {
-            return readConversionRate(url.openConnection());
+        private URL currentUrl(Currency from, Currency to) throws MalformedURLException {
+            return new URL(ExchangeRateApiUrl + "pair/" + from.code() + "/" + to.code());
         }
 
-        private double readConversionRate(URLConnection urlConnection) throws IOException {
-            try (InputStream inputStream = urlConnection.getInputStream()) {
-                return readConversionRate(new String(new BufferedInputStream(inputStream).readAllBytes()));
-            }
-        }
-
-        private double readConversionRate(String s) {
-            return readConversionRate(new Gson().fromJson(s, JsonObject.class));
+        private URL historicalUrl(LocalDate date, Currency from, Currency to) throws MalformedURLException {
+            return new URL(HistoricalRatesApiUrl +
+                    date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) +
+                    "?base=" + from.code() +
+                    "&symbols=" + to.code());
         }
 
         private double readConversionRate(JsonObject object) {
             return isCurrentRate(object) ? object.get(JsonConversionRateKey).getAsDouble()
-                    : object.get("rates").getAsJsonObject()
-                    .entrySet().iterator().next()
-                    .getValue().getAsDouble();
+                    : RateReader.doubleIn(object.get("rates").getAsJsonObject());
         }
 
         private boolean isCurrentRate(JsonObject object) {
             return object.has(JsonConversionRateKey);
         }
     }
+
     public static class ExchangeRateSeriesStore implements software.ulpgc.moneycalculator.architecture.io.ExchangeRateSeriesStore {
 
         @Override
         public Stream<ExchangeRate> exchangeRatesBetween(Currency from, Currency to, LocalDate start, LocalDate end) {
             try {
-                return ratesIn(new URL(HistoricalRatesApiUrl + start + ".." + end +
-                        "?base=" + from.code() + "&symbols=" + to.code()))
+                return ratesIn(RateReader.readJsonIn(urlFrom(from, to, start, end)))
                         .map(e -> createExchangeRateWith(from, to, e));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private Stream<Map.Entry<String, JsonElement>> ratesIn(URL url) throws IOException {
-            return ratesIn(url.openConnection());
-        }
-
-        private Stream<Map.Entry<String, JsonElement>> ratesIn(URLConnection urlConnection) {
-            try (InputStream inputStream = urlConnection.getInputStream()) {
-                return ratesIn(new String(new BufferedInputStream(inputStream).readAllBytes()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private Stream<Map.Entry<String, JsonElement>> ratesIn(String json) {
-            return ratesIn(new Gson().fromJson(json, JsonObject.class));
-        }
-
-        private double doubleIn(JsonObject jsonObject) {
-            return jsonObject.entrySet().iterator().next().getValue().getAsDouble();
-        }
-
-
         private ExchangeRate createExchangeRateWith(Currency from, Currency to, Map.Entry<String, JsonElement> e) {
             return new ExchangeRate(
                     LocalDate.parse(e.getKey()),
                     from,
                     to,
-                    doubleIn(e.getValue().getAsJsonObject())
+                    RateReader.doubleIn(e.getValue().getAsJsonObject())
             );
         }
 
@@ -242,6 +164,34 @@ public class WebService {
             return jsonObject.get("rates").getAsJsonObject().entrySet().stream();
         }
 
+        private URL urlFrom(Currency from, Currency to, LocalDate start, LocalDate end) throws MalformedURLException {
+            return new URL(HistoricalRatesApiUrl + start + ".." + end +
+                    "?base=" + from.code() + "&symbols=" + to.code());
+        }
+
+    }
+
+    public static class RateReader {
+
+        private static final Gson gson = new Gson();
+
+        public static JsonObject readJsonIn(URL url) throws IOException {
+            return readJsonIn(url.openConnection());
+        }
+
+        private static JsonObject readJsonIn(URLConnection urlConnection) throws IOException {
+            try (InputStream inputStream = urlConnection.getInputStream()) {
+                return readJsonIn(new String(new BufferedInputStream(inputStream).readAllBytes()));
+            }
+        }
+
+        private static JsonObject readJsonIn(String json) {
+            return gson.fromJson(json, JsonObject.class);
+        }
+
+        public static double doubleIn(JsonObject object) {
+            return object.entrySet().iterator().next().getValue().getAsDouble();
+        }
     }
 
     private static String apiKey() {
