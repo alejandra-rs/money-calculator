@@ -14,6 +14,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
+import static software.ulpgc.moneycalculator.application.beatles.Database.DateParser.dateOf;
+import static software.ulpgc.moneycalculator.application.beatles.Database.ExchangeRateMerger.mergeExchangeRates;
 
 public class Database {
 
@@ -169,12 +171,12 @@ public class Database {
 
         private final Connection connection;
         private final PreparedStatement preparedStatement;
-        private final Map<String, Currency> currencies;
+        private final ExchangeRateReader reader;
 
         public ExchangeRateStore(Connection connection, software.ulpgc.moneycalculator.architecture.io.CurrencyStore store) throws SQLException {
             this.connection = connection;
             this.preparedStatement = connection.prepareStatement("SELECT * FROM exchangeRates WHERE date = ? AND toCurrency = ?");
-            this.currencies = store.currencies().collect(toMap(Currency::code, c -> c));
+            this.reader = new ExchangeRateReader(store);
         }
 
         @Override
@@ -198,15 +200,6 @@ public class Database {
             return connection.createStatement().executeQuery("SELECT MAX(date) FROM exchangeRates");
         }
 
-        public static ExchangeRate mergeExchangeRates(ExchangeRate rate1, ExchangeRate rate2) {
-            return new ExchangeRate(
-                    rate1.date(),
-                    rate1.to(),
-                    rate2.to(),
-                    rate2.rate() / rate1.rate()
-            );
-        }
-
         private ExchangeRate exchangeRateFromEuroTo(Currency currency, LocalDate date) throws SQLException {
             return exchangeRateIn(resultSet(currency, date));
         }
@@ -219,30 +212,12 @@ public class Database {
 
         private ExchangeRate exchangeRateIn(ResultSet resultSet) {
             try {
-                ExchangeRate exchangeRate = resultSet.next() ? readExchangeRateIn(resultSet) : ExchangeRate.Null;
+                ExchangeRate exchangeRate = resultSet.next() ? reader.readExchangeRateIn(resultSet) : ExchangeRate.Null;
                 resultSet.close();
                 return exchangeRate;
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }
-
-        public ExchangeRate readExchangeRateIn(ResultSet resultSet) throws SQLException {
-            return new ExchangeRate(
-                    dateOf(resultSet.getString(1)),
-                    currencyOf("EUR"),
-                    currencyOf(resultSet.getString(2)),
-                    resultSet.getDouble(3)
-            );
-        }
-
-        private Currency currencyOf(String code) {
-            return currencies.getOrDefault(code, Currency.Null);
-        }
-
-        public static LocalDate dateOf(String date) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            return LocalDate.parse(date, formatter);
         }
     }
 
@@ -250,12 +225,12 @@ public class Database {
 
         private final Connection connection;
         private final String preparedStatement;
-        private final Map<String, Currency> currencies;
+        private final ExchangeRateReader reader;
 
         public ExchangeRateSeriesStore(Connection connection, software.ulpgc.moneycalculator.architecture.io.CurrencyStore store) {
             this.connection = connection;
             this.preparedStatement = "SELECT * FROM exchangeRates WHERE toCurrency = ? AND date BETWEEN ? AND ?";
-            this.currencies = store.currencies().collect(toMap(Currency::code, c -> c));
+            this.reader = new ExchangeRateReader(store);
         }
 
         @Override
@@ -281,7 +256,7 @@ public class Database {
         private ExchangeRate nextCompoundRateIn(ResultSet fromRs, ResultSet toRs) {
             try {
                 if (!fromRs.next() || !toRs.next()) return null;
-                return mergeExchangeRates(readExchangeRateIn(fromRs), readExchangeRateIn(toRs));
+                return mergeExchangeRates(reader.readExchangeRateIn(fromRs), reader.readExchangeRateIn(toRs));
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -303,33 +278,6 @@ public class Database {
             return statement;
         }
 
-        public static ExchangeRate mergeExchangeRates(ExchangeRate rate1, ExchangeRate rate2) {
-            return new ExchangeRate(
-                    rate1.date(),
-                    rate1.to(),
-                    rate2.to(),
-                    rate2.rate() / rate1.rate()
-            );
-        }
-
-        public ExchangeRate readExchangeRateIn(ResultSet resultSet) throws SQLException {
-            return new ExchangeRate(
-                    dateOf(resultSet.getString(1)),
-                    currencyOf("EUR"),
-                    currencyOf(resultSet.getString(2)),
-                    resultSet.getDouble(3)
-            );
-        }
-
-        private Currency currencyOf(String code) {
-            return currencies.getOrDefault(code, Currency.Null);
-        }
-
-        public static LocalDate dateOf(String date) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            return LocalDate.parse(date, formatter);
-        }
-
         private void close(PreparedStatement fromStatement, PreparedStatement toStatement) {
             try {
                 fromStatement.close();
@@ -349,4 +297,41 @@ public class Database {
         }
     }
 
+    public static class ExchangeRateReader {
+
+        private final Map<String, Currency> currencies;
+
+        public ExchangeRateReader(software.ulpgc.moneycalculator.architecture.io.CurrencyStore store) {
+            this.currencies = store.currencies().collect(toMap(Currency::code, c -> c));
+        }
+
+        public ExchangeRate readExchangeRateIn(ResultSet resultSet) throws SQLException {
+            return new ExchangeRate(
+                    dateOf(resultSet.getString(1)),
+                    currencyOf("EUR"),
+                    currencyOf(resultSet.getString(2)),
+                    resultSet.getDouble(3)
+            );
+        }
+
+        private Currency currencyOf(String code) {
+            return currencies.getOrDefault(code, Currency.Null);
+        }
+    }
+    public static class ExchangeRateMerger {
+        public static ExchangeRate mergeExchangeRates(ExchangeRate rate1, ExchangeRate rate2) {
+            return new ExchangeRate(
+                    rate1.date(),
+                    rate1.to(),
+                    rate2.to(),
+                    rate2.rate() / rate1.rate()
+            );
+        }
+    }
+    public static class DateParser {
+        public static LocalDate dateOf(String date) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            return LocalDate.parse(date, formatter);
+        }
+    }
 }
