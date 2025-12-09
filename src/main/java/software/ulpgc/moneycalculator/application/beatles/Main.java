@@ -43,32 +43,31 @@ public class Main {
                 .filter(c -> c.code().equals("EUR"))
                 .findFirst().orElse(Currency.Null);
 
-
-        Desktop desktop = new Desktop(currenciesIn(currenciesTable).currencies(),
+        Desktop desktop = Desktop.with(currenciesIn(currenciesTable).currencies(),
                                       currenciesIn(historicalCurrenciesTable).currencies());
 
         desktop.addCommand("exchange", new ExchangeMoneyCommand(
-                desktop.moneyDialog(),
-                desktop.outputCurrencyDialog(),
-                ratesIn(ratesConnection),
-                desktop.moneyDisplay()
-        ));
-        desktop.addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
-                desktop.moneyDialog(),
-                desktop.outputCurrencyDialog(),
-                desktop.inputDateDialog(),
-                ratesIn(ratesConnection),
-                desktop.moneyDisplay()
-        ));
-        desktop.addCommand("generateGraphics", new ViewHistoryCommand(
-                desktop.inputStartDateDialog(),
-                desktop.inputEndDateDialog(),
-                desktop.inputCurrencyDialog(),
-                desktop.outputCurrencyDialog(),
-                desktop.lineChartDisplay(),
-                new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
-        ));
-        desktop.setVisible(true);
+                        desktop.moneyDialog(),
+                        desktop.outputCurrencyDialog(),
+                        ratesIn(ratesConnection),
+                        desktop.moneyDisplay()
+                ))
+                .addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
+                        desktop.moneyDialog(),
+                        desktop.outputCurrencyDialog(),
+                        desktop.inputDateDialog(),
+                        ratesIn(ratesConnection),
+                        desktop.moneyDisplay()
+                ))
+                .addCommand("generateGraphics", new ViewHistoryCommand(
+                        desktop.inputStartDateDialog(),
+                        desktop.inputEndDateDialog(),
+                        desktop.inputCurrencyDialog(),
+                        desktop.outputCurrencyDialog(),
+                        desktop.lineChartDisplay(),
+                        new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
+                ))
+                .generateUi().setVisible(true);
 
         Runtime.getRuntime().addShutdownHook(new Thread(Main::closeConnections));
     }

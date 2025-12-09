@@ -31,18 +31,36 @@ public class Desktop extends JFrame {
     private DatePicker inputDate, inputStartDate, inputEndDate;
     private final JPanel outputChart = new JPanel(new BorderLayout());
 
-    public Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) throws Exception {
+    private Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) {
         this.commands = new HashMap<>();
         this.currencies = currencies.toList();
         this.historicalCurrencies = historicalCurrencies.toList();
+    }
+
+    public static Desktop with(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) {
+        return new Desktop(currencies, historicalCurrencies);
+    }
+
+    public Desktop addCommand(String name, Command command) {
+        this.commands.put(name, command);
+        return this;
+    }
+
+    public Desktop generateUi() throws Exception {
+        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        this.setWindowProperties().setLayout(new BorderLayout());
+        currentCurrenciesMode();
+        return this;
+
+    }
+
+    private Desktop setWindowProperties() {
         this.setTitle("Money Calculator");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(800,600);
         this.setLocationRelativeTo(null);
+        this.setSize(800,500);
         this.setResizable(false);
-        this.setLayout(new BorderLayout());
-        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-        currentCurrenciesMode();
+        return this;
     }
 
     private void clear() {
@@ -181,10 +199,6 @@ public class Desktop extends JFrame {
 
     public static DatePicker dateChooser() {
         return new DatePicker();
-    }
-
-    public void addCommand(String name, Command command) {
-        this.commands.put(name, command);
     }
 
     public MoneyDialog moneyDialog() {
