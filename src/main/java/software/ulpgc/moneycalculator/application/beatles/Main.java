@@ -47,24 +47,24 @@ public class Main {
                                       currenciesIn(historicalCurrenciesTable).currencies());
 
         desktop.addCommand("exchange", new ExchangeMoneyCommand(
-                        desktop.moneyDialog(),
-                        desktop.outputCurrencyDialog(),
+                        desktop.uiElementFactory().moneyDialog(),
+                        desktop.uiElementFactory().outputCurrencyDialog(),
                         ratesIn(ratesConnection),
-                        desktop.moneyDisplay()
+                        desktop.uiElementFactory().moneyDisplay()
                 ))
                 .addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
-                        desktop.moneyDialog(),
-                        desktop.outputCurrencyDialog(),
-                        desktop.inputDateDialog(),
+                        desktop.uiElementFactory().moneyDialog(),
+                        desktop.uiElementFactory().outputCurrencyDialog(),
+                        desktop.uiElementFactory().inputDateDialog(),
                         ratesIn(ratesConnection),
-                        desktop.moneyDisplay()
+                        desktop.uiElementFactory().moneyDisplay()
                 ))
                 .addCommand("generateGraphics", new ViewHistoryCommand(
-                        desktop.inputStartDateDialog(),
-                        desktop.inputEndDateDialog(),
-                        desktop.inputCurrencyDialog(),
-                        desktop.outputCurrencyDialog(),
-                        desktop.lineChartDisplay(),
+                        desktop.uiElementFactory().inputStartDateDialog(),
+                        desktop.uiElementFactory().inputEndDateDialog(),
+                        desktop.uiElementFactory().inputCurrencyDialog(),
+                        desktop.uiElementFactory().outputCurrencyDialog(),
+                        desktop.uiElementFactory().lineChartDisplay(),
                         new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
                 ))
                 .generateUi().setVisible(true);

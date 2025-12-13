@@ -13,24 +13,24 @@ public class Main {
                                        WebService.CurrencyStore.forHistoricalCurrencies().currencies());
 
         desktop.addCommand("exchange", new ExchangeMoneyCommand(
-                desktop.moneyDialog(),
-                desktop.outputCurrencyDialog(),
+                desktop.uiElementFactory().moneyDialog(),
+                desktop.uiElementFactory().outputCurrencyDialog(),
                 new WebService.ExchangeRateStore(),
-                desktop.moneyDisplay()
+                desktop.uiElementFactory().moneyDisplay()
         ))
         .addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
-                desktop.moneyDialog(),
-                desktop.outputCurrencyDialog(),
-                desktop.inputDateDialog(),
+                desktop.uiElementFactory().moneyDialog(),
+                desktop.uiElementFactory().outputCurrencyDialog(),
+                desktop.uiElementFactory().inputDateDialog(),
                 new WebService.ExchangeRateStore(),
-                desktop.moneyDisplay()
+                desktop.uiElementFactory().moneyDisplay()
         ))
         .addCommand("generateGraphics", new ViewHistoryCommand(
-                desktop.inputStartDateDialog(),
-                desktop.inputEndDateDialog(),
-                desktop.inputCurrencyDialog(),
-                desktop.outputCurrencyDialog(),
-                desktop.lineChartDisplay(),
+                desktop.uiElementFactory().inputStartDateDialog(),
+                desktop.uiElementFactory().inputEndDateDialog(),
+                desktop.uiElementFactory().inputCurrencyDialog(),
+                desktop.uiElementFactory().outputCurrencyDialog(),
+                desktop.uiElementFactory().lineChartDisplay(),
                 new WebService.ExchangeRateSeriesStore()
         ))
         .generateUi().setVisible(true);

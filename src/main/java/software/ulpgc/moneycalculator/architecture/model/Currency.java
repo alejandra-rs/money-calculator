@@ -6,6 +6,6 @@ public record Currency(String code, String country) {
 
     @Override
     public String toString() {
-        return code;
+        return code + " - " + country;
     }
 }
