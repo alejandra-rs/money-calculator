@@ -9,13 +9,13 @@ import software.ulpgc.moneycalculator.architecture.ui.*;
 import software.ulpgc.moneycalculator.architecture.viewmodel.LineChart;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.awt.*;
 import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -82,6 +82,7 @@ public class Desktop extends JFrame {
         return this;
     }
 
+
     private void clear() {
         this.getContentPane().removeAll();
         this.getContentPane().revalidate();
@@ -93,7 +94,7 @@ public class Desktop extends JFrame {
         this.getContentPane().add(modeButtons(), NORTH);
         this.getContentPane().add(mode == Mode.CURRENT ? currentModeCenterPanel() :
                                   mode == Mode.HISTORY ? historyModeCenterPanel() :
-                                                         graphicsModeCenterPanel());
+                                  graphicsModeCenterPanel());
     }
 
     private JPanel modeButtons() {
@@ -128,7 +129,7 @@ public class Desktop extends JFrame {
 
         centerPanel.add(exchangePanelWith(currencies), CENTER);
         centerPanel.add(buildPanelWith(nonOpaquePanel(new FlowLayout()),
-                DarkGreenTheme.forHeaderButton(createButton("Exchange", e -> exchangeMoney()))), SOUTH);
+                        DarkGreenTheme.forHeaderButton(createButton("Exchange", e -> exchangeMoney()))), SOUTH);
 
         return panelWithBorderFor(CURRENT, centerPanel);
     }
@@ -140,7 +141,7 @@ public class Desktop extends JFrame {
         centerPanel.add(buildPanelWith(nonOpaquePanel(new FlowLayout()), inputDate = dateChooser()), NORTH);
         centerPanel.add(exchangePanelWith(historicalCurrencies), CENTER);
         centerPanel.add(buildPanelWith(nonOpaquePanel(new FlowLayout()),
-                DarkGreenTheme.forHeaderButton(createButton("Exchange", e -> exchangeHistoricalMoney()))), SOUTH);
+                        DarkGreenTheme.forHeaderButton(createButton("Exchange", e -> exchangeHistoricalMoney()))), SOUTH);
 
         return panelWithBorderFor(HISTORY, centerPanel);
     }
@@ -153,7 +154,7 @@ public class Desktop extends JFrame {
 
         controlsContainer.add(panelWithBorderFor(GRAPHICS, graphicsPanel()), CENTER);
         controlsContainer.add(panelWithBorderFor(GRAPHICS, buildPanelWith(nonOpaquePanel(new GridBagLayout()),
-                DarkGreenTheme.forHeaderButton(createButton("Generate graphics", e -> generateGraphics())))), EAST);
+                              DarkGreenTheme.forHeaderButton(createButton("Generate graphics", e -> generateGraphics())))), EAST);
 
         panel.add(controlsContainer, NORTH);
         panel.add(outputChart, CENTER);
@@ -190,8 +191,8 @@ public class Desktop extends JFrame {
         panel.setOpaque(false);
         addToRow(panel, 0, inputStartDate = dateChooser(), arrowLabel(), inputEndDate = dateChooser());
         addToRow(panel, 1, inputCurrency = graphicsCurrencySelectorWith(historicalCurrencies),
-                swapCurrenciesButton(),
-                outputCurrency = graphicsCurrencySelectorWith(historicalCurrencies));
+                                 swapCurrenciesButton(),
+                                 outputCurrency = graphicsCurrencySelectorWith(historicalCurrencies));
         return panel;
     }
 

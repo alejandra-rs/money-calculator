@@ -21,7 +21,7 @@ public class Main {
     private static final String databaseConnectionUrl = "jdbc:sqlite:";
     private static final String currencyDatabase = "currencies.db";
     private static final String ratesDatabase = "rates.db";
-
+    
     private static final String currenciesTable = "currencies";
     private static final String historicalCurrenciesTable = "historicalCurrencies";
     private static final String ratesTable = "exchangeRates";
@@ -44,33 +44,46 @@ public class Main {
                 .findFirst().orElse(Currency.Null);
 
         Desktop desktop = Desktop.with(currenciesIn(currenciesTable).currencies(),
-                                      currenciesIn(historicalCurrenciesTable).currencies());
+                                       currenciesIn(historicalCurrenciesTable).currencies());
 
-        desktop.addCommand("exchange", new ExchangeMoneyCommand(
-                        desktop.uiElementFactory().moneyDialog(),
-                        desktop.uiElementFactory().outputCurrencyDialog(),
-                        ratesIn(ratesConnection),
-                        desktop.uiElementFactory().moneyDisplay()
-                ))
-                .addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
-                        desktop.uiElementFactory().moneyDialog(),
-                        desktop.uiElementFactory().outputCurrencyDialog(),
-                        desktop.uiElementFactory().inputDateDialog(),
-                        ratesIn(ratesConnection),
-                        desktop.uiElementFactory().moneyDisplay()
-                ))
-                .addCommand("generateGraphics", new ViewHistoryCommand(
-                        desktop.uiElementFactory().inputStartDateDialog(),
-                        desktop.uiElementFactory().inputEndDateDialog(),
-                        desktop.uiElementFactory().inputCurrencyDialog(),
-                        desktop.uiElementFactory().outputCurrencyDialog(),
-                        desktop.uiElementFactory().lineChartDisplay(),
-                        new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
-                ))
+        desktop.addCommand("exchange", exchangeMoneyCommand(desktop))
+                .addCommand("historicalExchange", historicalExchangeMoneyCommand(desktop))
+                .addCommand("generateGraphics", viewHistoryCommand(desktop))
                 .generateUi().setVisible(true);
 
         Runtime.getRuntime().addShutdownHook(new Thread(Main::closeConnections));
     }
+
+    private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) throws SQLException {
+        return new ViewHistoryCommand(
+                desktop.uiElementFactory().inputStartDateDialog(),
+                desktop.uiElementFactory().inputEndDateDialog(),
+                desktop.uiElementFactory().inputCurrencyDialog(),
+                desktop.uiElementFactory().outputCurrencyDialog(),
+                desktop.uiElementFactory().lineChartDisplay(),
+                new Database.ExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
+        );
+    }
+
+    private static HistoricalExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) throws SQLException {
+        return new HistoricalExchangeMoneyCommand(
+                desktop.uiElementFactory().moneyDialog(),
+                desktop.uiElementFactory().outputCurrencyDialog(),
+                desktop.uiElementFactory().inputDateDialog(),
+                ratesIn(ratesConnection),
+                desktop.uiElementFactory().moneyDisplay()
+        );
+    }
+
+    private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) throws SQLException {
+        return new ExchangeMoneyCommand(
+                desktop.uiElementFactory().moneyDialog(),
+                desktop.uiElementFactory().outputCurrencyDialog(),
+                ratesIn(ratesConnection),
+                desktop.uiElementFactory().moneyDisplay()
+        );
+    }
+
 
     private static boolean tableNonExistent(Connection connection, String tableName) throws SQLException {
         return fileIsEmpty(connection) || !connection.getMetaData()
@@ -128,8 +141,8 @@ public class Main {
 
     private static Stream<ExchangeRate> pastRatesSince(LocalDate date, Currency c) {
         return c.equals(euro) ? getEuroStream(date) :
-                new WebService.ExchangeRateSeriesStore()
-                        .exchangeRatesBetween(euro, c, date, LocalDate.now().minusDays(1));
+                                new WebService.ExchangeRateSeriesStore()
+                                        .exchangeRatesBetween(euro, c, date, LocalDate.now().minusDays(1));
     }
 
     private static Stream<ExchangeRate> getEuroStream(LocalDate date) {

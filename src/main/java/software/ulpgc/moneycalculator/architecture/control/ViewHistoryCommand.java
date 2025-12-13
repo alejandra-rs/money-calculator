@@ -33,7 +33,7 @@ public class ViewHistoryCommand implements Command {
         Currency to = outputCurrencyDialog.get();
 
         LineChart lineChart = LineChartBuilder.with(store.exchangeRatesBetween(from, to, startDateDialog.get(), endDateDialog.get()))
-                .build();
+                                              .build();
 
         lineChartDisplay.show(lineChart);
     }

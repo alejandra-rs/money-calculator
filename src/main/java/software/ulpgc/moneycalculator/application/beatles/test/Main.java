@@ -12,27 +12,40 @@ public class Main {
         Desktop desktop = Desktop.with(WebService.CurrencyStore.forCurrentCurrencies().currencies(),
                                        WebService.CurrencyStore.forHistoricalCurrencies().currencies());
 
-        desktop.addCommand("exchange", new ExchangeMoneyCommand(
+        desktop.addCommand("exchange", exchangeMoneyCommand(desktop))
+                .addCommand("historicalExchange", historicalExchangeMoneyCommand(desktop))
+                .addCommand("generateGraphics", viewHistoryCommand(desktop))
+                .generateUi().setVisible(true);
+
+    }
+
+    private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) {
+        return new ExchangeMoneyCommand(
                 desktop.uiElementFactory().moneyDialog(),
                 desktop.uiElementFactory().outputCurrencyDialog(),
                 new WebService.ExchangeRateStore(),
                 desktop.uiElementFactory().moneyDisplay()
-        ))
-        .addCommand("historicalExchange", new HistoricalExchangeMoneyCommand(
+        );
+    }
+
+    private static HistoricalExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) {
+        return new HistoricalExchangeMoneyCommand(
                 desktop.uiElementFactory().moneyDialog(),
                 desktop.uiElementFactory().outputCurrencyDialog(),
                 desktop.uiElementFactory().inputDateDialog(),
                 new WebService.ExchangeRateStore(),
                 desktop.uiElementFactory().moneyDisplay()
-        ))
-        .addCommand("generateGraphics", new ViewHistoryCommand(
+        );
+    }
+
+    private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) {
+        return new ViewHistoryCommand(
                 desktop.uiElementFactory().inputStartDateDialog(),
                 desktop.uiElementFactory().inputEndDateDialog(),
                 desktop.uiElementFactory().inputCurrencyDialog(),
                 desktop.uiElementFactory().outputCurrencyDialog(),
                 desktop.uiElementFactory().lineChartDisplay(),
                 new WebService.ExchangeRateSeriesStore()
-        ))
-        .generateUi().setVisible(true);
+        );
     }
 }

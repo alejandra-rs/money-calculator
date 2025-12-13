@@ -13,13 +13,13 @@ import java.time.LocalDate;
 public class ExchangeMoneyCommand implements Command {
     private final MoneyDialog moneyDialog;
     private final CurrencyDialog currencyDialog;
-    private final ExchangeRateStore exchangeRateStore;
+    private final ExchangeRateStore store;
     private final MoneyDisplay moneyDisplay;
 
-    public ExchangeMoneyCommand(MoneyDialog moneyDialog, CurrencyDialog currencyDialog, ExchangeRateStore exchangeRateStore, MoneyDisplay moneyDisplay) {
+    public ExchangeMoneyCommand(MoneyDialog moneyDialog, CurrencyDialog currencyDialog, ExchangeRateStore store, MoneyDisplay moneyDisplay) {
         this.moneyDialog = moneyDialog;
         this.currencyDialog = currencyDialog;
-        this.exchangeRateStore = exchangeRateStore;
+        this.store = store;
         this.moneyDisplay = moneyDisplay;
     }
 
@@ -28,7 +28,7 @@ public class ExchangeMoneyCommand implements Command {
         Money money = moneyDialog.get();
         Currency currency = currencyDialog.get();
 
-        ExchangeRate exchangeRate = exchangeRateStore.load(money.currency(), currency, LocalDate.now());
+        ExchangeRate exchangeRate = store.load(money.currency(), currency, LocalDate.now());
 
         Money result = new Money(money.amount() * exchangeRate.rate(), currency);
         moneyDisplay.show(result);
