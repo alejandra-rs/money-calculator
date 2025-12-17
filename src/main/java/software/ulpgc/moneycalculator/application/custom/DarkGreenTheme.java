@@ -1,4 +1,4 @@
-package software.ulpgc.moneycalculator.application.beatles;
+package software.ulpgc.moneycalculator.application.custom;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import org.jfree.chart.JFreeChart;

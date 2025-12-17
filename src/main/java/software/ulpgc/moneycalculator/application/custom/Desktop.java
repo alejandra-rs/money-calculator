@@ -1,7 +1,8 @@
-package software.ulpgc.moneycalculator.application.beatles;
+package software.ulpgc.moneycalculator.application.custom;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
+import software.ulpgc.moneycalculator.application.custom.beatles.Main;
 import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
@@ -23,9 +24,9 @@ import java.util.stream.Stream;
 import static java.awt.BorderLayout.*;
 import static java.awt.GridBagConstraints.RELATIVE;
 import static java.awt.Image.SCALE_SMOOTH;
-import static software.ulpgc.moneycalculator.application.beatles.Desktop.ButtonFactory.createButton;
-import static software.ulpgc.moneycalculator.application.beatles.Desktop.ComponentFactory.*;
-import static software.ulpgc.moneycalculator.application.beatles.Desktop.Mode.*;
+import static software.ulpgc.moneycalculator.application.custom.Desktop.ButtonFactory.createButton;
+import static software.ulpgc.moneycalculator.application.custom.Desktop.ComponentFactory.*;
+import static software.ulpgc.moneycalculator.application.custom.Desktop.Mode.*;
 
 public class Desktop extends JFrame {
 
@@ -75,6 +76,7 @@ public class Desktop extends JFrame {
 
     private Desktop setWindowProperties() {
         this.setTitle("Money Calculator");
+        this.setIconImage(new ImageIcon(Main.class.getResource("/moneycalculator.png")).getImage());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(800,500);
         this.setResizable(false);

@@ -1,7 +1,7 @@
-package software.ulpgc.moneycalculator.application.beatles.test;
+package software.ulpgc.moneycalculator.application.custom.beatles;
 
-import software.ulpgc.moneycalculator.application.beatles.Desktop;
-import software.ulpgc.moneycalculator.application.beatles.WebService;
+import software.ulpgc.moneycalculator.application.custom.Desktop;
+import software.ulpgc.moneycalculator.application.custom.WebService;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.HistoricalExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;

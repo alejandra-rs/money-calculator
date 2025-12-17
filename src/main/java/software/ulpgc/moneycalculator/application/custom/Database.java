@@ -1,4 +1,4 @@
-package software.ulpgc.moneycalculator.application.beatles;
+package software.ulpgc.moneycalculator.application.custom;
 
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
@@ -14,8 +14,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
-import static software.ulpgc.moneycalculator.application.beatles.Database.DateParser.dateOf;
-import static software.ulpgc.moneycalculator.application.beatles.Database.ExchangeRateMerger.mergeExchangeRates;
+import static software.ulpgc.moneycalculator.application.custom.Database.DateParser.dateOf;
+import static software.ulpgc.moneycalculator.application.custom.Database.ExchangeRateMerger.mergeExchangeRates;
 
 public class Database {
 

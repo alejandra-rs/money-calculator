@@ -1,4 +1,4 @@
-package software.ulpgc.moneycalculator.application.beatles;
+package software.ulpgc.moneycalculator.application.custom;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;

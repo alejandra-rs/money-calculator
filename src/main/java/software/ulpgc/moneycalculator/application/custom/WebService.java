@@ -1,11 +1,9 @@
-package software.ulpgc.moneycalculator.application.beatles;
+package software.ulpgc.moneycalculator.application.custom;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
-import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 
