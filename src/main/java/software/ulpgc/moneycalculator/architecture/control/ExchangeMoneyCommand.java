@@ -4,33 +4,28 @@ import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 import software.ulpgc.moneycalculator.architecture.model.Money;
-import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
+import software.ulpgc.moneycalculator.architecture.ui.ExchangeMoneyDialog;
 
 import java.time.LocalDate;
 
 public class ExchangeMoneyCommand implements Command {
-    private final MoneyDialog moneyDialog;
-    private final CurrencyDialog currencyDialog;
+    private final ExchangeMoneyDialog exchangeMoneyDialog;
     private final ExchangeRateStore store;
-    private final MoneyDisplay moneyDisplay;
 
-    public ExchangeMoneyCommand(MoneyDialog moneyDialog, CurrencyDialog currencyDialog, ExchangeRateStore store, MoneyDisplay moneyDisplay) {
-        this.moneyDialog = moneyDialog;
-        this.currencyDialog = currencyDialog;
+    public ExchangeMoneyCommand(ExchangeMoneyDialog exchangeMoneyDialog, ExchangeRateStore store) {
+        this.exchangeMoneyDialog = exchangeMoneyDialog;
         this.store = store;
-        this.moneyDisplay = moneyDisplay;
     }
 
     @Override
     public void execute() {
-        Money money = moneyDialog.get();
-        Currency currency = currencyDialog.get();
+        Money money = exchangeMoneyDialog.getMoney();
+        Currency currency = exchangeMoneyDialog.getToCurrency();
+        LocalDate date = exchangeMoneyDialog.getDate();
 
-        ExchangeRate exchangeRate = store.load(money.currency(), currency, LocalDate.now());
+        ExchangeRate exchangeRate = store.load(money.currency(), currency, date);
 
         Money result = new Money(money.amount() * exchangeRate.rate(), currency);
-        moneyDisplay.show(result);
+        exchangeMoneyDialog.show(result);
     }
 }

@@ -6,7 +6,6 @@ import software.ulpgc.moneycalculator.application.database.*;
 import software.ulpgc.moneycalculator.application.webservice.WebServiceCurrencyStore;
 import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
-import software.ulpgc.moneycalculator.architecture.control.HistoricalExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
 import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
 import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
@@ -61,31 +60,22 @@ public class Main {
 
     private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) throws SQLException {
         return new ViewHistoryCommand(
-                desktop.uiElementFactory().inputStartDateDialog(),
-                desktop.uiElementFactory().inputEndDateDialog(),
-                desktop.uiElementFactory().inputCurrencyDialog(),
-                desktop.uiElementFactory().outputCurrencyDialog(),
-                desktop.uiElementFactory().lineChartDisplay(),
+                desktop.uiElementFactory().exchangeCurrencyDialog(),
                 new DatabaseExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
         );
     }
 
-    private static HistoricalExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) throws SQLException {
-        return new HistoricalExchangeMoneyCommand(
-                desktop.uiElementFactory().moneyDialog(),
-                desktop.uiElementFactory().outputCurrencyDialog(),
-                desktop.uiElementFactory().inputDateDialog(),
-                ratesIn(ratesConnection),
-                desktop.uiElementFactory().moneyDisplay()
+    private static ExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) throws SQLException {
+        return new ExchangeMoneyCommand(
+                desktop.uiElementFactory().historicalExchangeMoneyDialog(),
+                ratesIn(ratesConnection)
         );
     }
 
     private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) throws SQLException {
         return new ExchangeMoneyCommand(
-                desktop.uiElementFactory().moneyDialog(),
-                desktop.uiElementFactory().outputCurrencyDialog(),
-                ratesIn(ratesConnection),
-                desktop.uiElementFactory().moneyDisplay()
+                desktop.uiElementFactory().exchangeMoneyDialog(),
+                ratesIn(ratesConnection)
         );
     }
 

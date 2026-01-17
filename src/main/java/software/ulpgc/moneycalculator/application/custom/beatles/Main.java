@@ -5,7 +5,7 @@ import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeR
 import software.ulpgc.moneycalculator.application.webservice.WebServiceCurrencyStore;
 import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
-import software.ulpgc.moneycalculator.architecture.control.HistoricalExchangeMoneyCommand;
+import software.ulpgc.moneycalculator.architecture.control.SwapCurrenciesCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
 
 public class Main {
@@ -17,37 +17,33 @@ public class Main {
         desktop.addCommand("exchange", exchangeMoneyCommand(desktop))
                 .addCommand("historicalExchange", historicalExchangeMoneyCommand(desktop))
                 .addCommand("generateGraphics", viewHistoryCommand(desktop))
+                .addCommand("swapCurrencies", swapCurrenciesCommand(desktop))
                 .generateUi().setVisible(true);
 
     }
 
     private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) {
         return new ExchangeMoneyCommand(
-                desktop.uiElementFactory().moneyDialog(),
-                desktop.uiElementFactory().outputCurrencyDialog(),
-                new WebServiceExchangeRateStore(),
-                desktop.uiElementFactory().moneyDisplay()
+                desktop.uiElementFactory().exchangeMoneyDialog(),
+                new WebServiceExchangeRateStore()
         );
     }
 
-    private static HistoricalExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) {
-        return new HistoricalExchangeMoneyCommand(
-                desktop.uiElementFactory().moneyDialog(),
-                desktop.uiElementFactory().outputCurrencyDialog(),
-                desktop.uiElementFactory().inputDateDialog(),
-                new WebServiceExchangeRateStore(),
-                desktop.uiElementFactory().moneyDisplay()
+    private static ExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) {
+        return new ExchangeMoneyCommand(
+                desktop.uiElementFactory().historicalExchangeMoneyDialog(),
+                new WebServiceExchangeRateStore()
         );
     }
 
     private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) {
         return new ViewHistoryCommand(
-                desktop.uiElementFactory().inputStartDateDialog(),
-                desktop.uiElementFactory().inputEndDateDialog(),
-                desktop.uiElementFactory().inputCurrencyDialog(),
-                desktop.uiElementFactory().outputCurrencyDialog(),
-                desktop.uiElementFactory().lineChartDisplay(),
+                desktop.uiElementFactory().exchangeCurrencyDialog(),
                 new WebServiceExchangeRateSeriesStore()
         );
+    }
+
+    private static SwapCurrenciesCommand swapCurrenciesCommand(Desktop desktop) {
+        return new SwapCurrenciesCommand(desktop.uiElementFactory().currencyPanel());
     }
 }

@@ -4,35 +4,54 @@ import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
-import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
+import software.ulpgc.moneycalculator.architecture.ui.ExchangeMoneyDialog;
 
-import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         List<Currency> currencies = new MockCurrencyStore().currencies().toList();
         Command command = new ExchangeMoneyCommand(
-                moneyDialog(currencies),
-                currencyDialog(currencies),
-                new MockExchangeRateStore(),
-                moneyDisplay()
+                exchangeMoneyDialog(currencies),
+                new MockExchangeRateStore()
         );
         command.execute();
     }
 
-    private static MoneyDisplay moneyDisplay() {
-        return System.out::println;
-    }
+    private static ExchangeMoneyDialog exchangeMoneyDialog(List<Currency> currencies) {
+        return new ExchangeMoneyDialog() {
+            @Override
+            public Money getMoney() {
+                return new Money(100, currencies.getFirst());
+            }
 
-    private static CurrencyDialog currencyDialog(List<Currency> currencies) {
-        return () -> currencies.get(1);
-    }
+            @Override
+            public LocalDate getDate() {
+                return LocalDate.now();
+            }
 
-    private static MoneyDialog moneyDialog(List<Currency> currencies) {
-        return () -> new Money(100, currencies.get(0));
+            @Override
+            public void show(Money money) {
+                System.out.println(money);
+            }
+
+            @Override
+            public Currency getFromCurrency() {
+                return currencies.getFirst();
+            }
+
+            @Override
+            public Currency getToCurrency() {
+                return currencies.get(1);
+            }
+
+            @Override
+            public void setFromCurrency(Currency currency) {}
+
+            @Override
+            public void setToCurrency(Currency currency) {}
+        };
     }
 }

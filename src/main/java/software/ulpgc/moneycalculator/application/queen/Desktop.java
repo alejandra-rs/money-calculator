@@ -3,11 +3,10 @@ package software.ulpgc.moneycalculator.application.queen;
 import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
-import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
-import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
+import software.ulpgc.moneycalculator.architecture.ui.ExchangeMoneyDialog;
 
 import javax.swing.*;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.awt.*;
@@ -71,21 +70,43 @@ public class Desktop extends JFrame {
         return currencies.toArray(new Currency[0]);
     }
 
-
     public void addCommand(String name, Command command) {
         this.commands.put(name, command);
     }
 
-    public MoneyDialog moneyDialog() {
-        return () -> new Money(inputAmount(), inputCurrency());
-    }
+    public ExchangeMoneyDialog exchangeMoneyDialog() {
+        return new ExchangeMoneyDialog() {
+            @Override
+            public Money getMoney() {
+                return new Money(inputAmount(), inputCurrency());
+            }
 
-    public CurrencyDialog currencyDialog() {
-        return this::outputCurrency;
-    }
+            @Override
+            public LocalDate getDate() {
+                return LocalDate.now();
+            }
 
-    public MoneyDisplay moneyDisplay() {
-        return money -> outputAmount.setText(money.amount() + "");
+            @Override
+            public void show(Money money) {
+                outputAmount.setText(money.amount() + "");
+            }
+
+            @Override
+            public Currency getFromCurrency() {
+                return inputCurrency();
+            }
+
+            @Override
+            public Currency getToCurrency() {
+                return outputCurrency();
+            }
+
+            @Override
+            public void setFromCurrency(Currency currency) {}
+
+            @Override
+            public void setToCurrency(Currency currency) {}
+        };
     }
 
     private double inputAmount() {

@@ -117,7 +117,7 @@ public class Desktop extends JFrame {
     }
 
     private JButton swapCurrenciesButton() {
-        return createButton(Main.class.getResource("/swap.png"), e -> swapCurrencies());
+        return createButton(Main.class.getResource("/swap.png"), e -> commands.get("swapCurrencies").execute());
     }
 
     private JPanel buildPanelWith(JPanel panel, Component... components) {
@@ -230,13 +230,6 @@ public class Desktop extends JFrame {
         else commands.get("generateGraphics").execute();
     }
 
-    private void swapCurrencies() {
-        int inputIndex = inputCurrency.getSelectedIndex();
-        inputCurrency.setSelectedIndex(outputCurrency.getSelectedIndex());
-        outputCurrency.setSelectedIndex(inputIndex);
-        outputAmount.setText("");
-    }
-
     private void showErrorPanel(String message) {
         JOptionPane.showMessageDialog(
                 this,
@@ -254,46 +247,147 @@ public class Desktop extends JFrame {
 
         public UiElementFactory() {}
 
-        public MoneyDialog moneyDialog() {
-            return () -> new Money(inputAmount(), inputCurrency());
+        public ExchangeCurrencyDialog exchangeCurrencyDialog() {
+            return new ExchangeCurrencyDialog() {
+                @Override
+                public LocalDate getFromDate() {
+                    return inputStartDate.getDate();
+                }
+
+                @Override
+                public LocalDate getToDate() {
+                    return inputEndDate.getDate();
+                }
+
+                @Override
+                public void show(LineChart lineChart) {
+                    outputChart.removeAll();
+                    outputChart.add(TimeSeriesChartBuilder.with(lineChart).build(), BorderLayout.CENTER);
+                    outputChart.revalidate();
+                }
+
+                @Override
+                public Currency getFromCurrency() {
+                    return (Currency) inputCurrency.getSelectedItem();
+                }
+
+                @Override
+                public Currency getToCurrency() {
+                    return (Currency) outputCurrency.getSelectedItem();
+                }
+
+                @Override
+                public void setFromCurrency(Currency currency) {
+                    inputCurrency.setSelectedItem(currency);
+                }
+
+                @Override
+                public void setToCurrency(Currency currency) {
+                    outputCurrency.setSelectedItem(currency);
+                }
+            };
         }
 
-        public CurrencyDialog inputCurrencyDialog() {
-            return this::inputCurrency;
+        public ExchangeMoneyDialog historicalExchangeMoneyDialog() {
+            return new ExchangeMoneyDialog() {
+                @Override
+                public Money getMoney() {
+                    return new Money(inputAmount(), getFromCurrency());
+                }
+
+                @Override
+                public LocalDate getDate() {
+                    return inputDate.getDate();
+                }
+
+                @Override
+                public void show(Money money) {
+                    outputAmount.setText(String.format("%10f", money.amount()));
+                }
+
+                @Override
+                public Currency getFromCurrency() {
+                    return (Currency) inputCurrency.getSelectedItem();
+                }
+
+                @Override
+                public Currency getToCurrency() {
+                    return (Currency) outputCurrency.getSelectedItem();
+                }
+
+                @Override
+                public void setFromCurrency(Currency currency) {
+                    inputCurrency.setSelectedItem(currency);
+                }
+
+                @Override
+                public void setToCurrency(Currency currency) {
+                    outputCurrency.setSelectedItem(currency);
+                }
+            };
         }
 
-        private Currency inputCurrency() {
-            return (Currency) inputCurrency.getSelectedItem();
+        public ExchangeMoneyDialog exchangeMoneyDialog() {
+            return new ExchangeMoneyDialog() {
+                @Override
+                public Money getMoney() {
+                    return new Money(inputAmount(), getFromCurrency());
+                }
+
+                @Override
+                public LocalDate getDate() {
+                    return LocalDate.now();
+                }
+
+                @Override
+                public void show(Money money) {
+                    outputAmount.setText(String.format("%10f", money.amount()));
+                }
+
+                @Override
+                public Currency getFromCurrency() {
+                    return (Currency) inputCurrency.getSelectedItem();
+                }
+
+                @Override
+                public Currency getToCurrency() {
+                    return (Currency) outputCurrency.getSelectedItem();
+                }
+
+                @Override
+                public void setFromCurrency(Currency currency) {
+                    inputCurrency.setSelectedItem(currency);
+                }
+
+                @Override
+                public void setToCurrency(Currency currency) {
+                    outputCurrency.setSelectedItem(currency);
+                }
+            };
         }
 
-        public CurrencyDialog outputCurrencyDialog() {
-            return () -> (Currency) outputCurrency.getSelectedItem();
-        }
+        public CurrencyPanel currencyPanel() {
+            return new CurrencyPanel() {
+                @Override
+                public Currency getFromCurrency() {
+                    return (Currency) inputCurrency.getSelectedItem();
+                }
 
-        public MoneyDisplay moneyDisplay() {
-            return money -> outputAmount.setText(String.format("%10f", money.amount()));
-        }
+                @Override
+                public Currency getToCurrency() {
+                    return (Currency) outputCurrency.getSelectedItem();
+                }
 
-        public DateDialog inputDateDialog() {
-            return () -> inputDate.getDate();
-        }
+                @Override
+                public void setFromCurrency(Currency currency) {
+                    inputCurrency.setSelectedItem(currency);
+                }
 
-        public DateDialog inputStartDateDialog() {
-            return () -> inputStartDate.getDate();
-        }
-
-        public DateDialog inputEndDateDialog() {
-            return () -> inputEndDate.getDate();
-        }
-
-        public LineChartDisplay lineChartDisplay() {
-            return this::display;
-        }
-
-        private void display(LineChart lineChart) {
-            outputChart.removeAll();
-            outputChart.add(TimeSeriesChartBuilder.with(lineChart).build(), BorderLayout.CENTER);
-            outputChart.revalidate();
+                @Override
+                public void setToCurrency(Currency currency) {
+                    outputCurrency.setSelectedItem(currency);
+                }
+            };
         }
 
         private double inputAmount() {
