@@ -12,8 +12,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-import static software.ulpgc.moneycalculator.application.custom.Database.DateParser.dateOf;
-import static software.ulpgc.moneycalculator.application.custom.Database.ExchangeRateMerger.mergeExchangeRates;
+import static java.time.LocalDate.parse;
+import static java.time.format.DateTimeFormatter.ofPattern;
 
 public class DatabaseExchangeRateStore implements ExchangeRateStore {
 
@@ -37,7 +37,7 @@ public class DatabaseExchangeRateStore implements ExchangeRateStore {
     }
 
     public LocalDate latestStoredDate() throws SQLException {
-        return dateOf(maxDateQuery());
+        return parse(maxDateQuery(), ofPattern("yyyy-MM-dd"));
     }
 
     private String maxDateQuery() throws SQLException {
@@ -70,10 +70,19 @@ public class DatabaseExchangeRateStore implements ExchangeRateStore {
 
     public ExchangeRate readExchangeRateIn(ResultSet resultSet) throws SQLException {
         return new ExchangeRate(
-                dateOf(resultSet.getString(1)),
+                parse(resultSet.getString(1), ofPattern("yyyy-MM-dd")),
                 query.euro(),
                 query.currencyWith(resultSet.getString(2)),
                 resultSet.getDouble(3)
+        );
+    }
+
+    public ExchangeRate mergeExchangeRates(ExchangeRate rate1, ExchangeRate rate2) {
+        return new ExchangeRate(
+                rate1.date(),
+                rate1.to(),
+                rate2.to(),
+                rate2.rate() / rate1.rate()
         );
     }
 }

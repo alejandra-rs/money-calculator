@@ -2,7 +2,6 @@ package software.ulpgc.moneycalculator.application.webservice;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import software.ulpgc.moneycalculator.application.custom.WebService;
 import software.ulpgc.moneycalculator.architecture.io.ExchangeRateSeriesStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
@@ -14,14 +13,14 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class WebServiceExchangeRateSeriesStore implements ExchangeRateSeriesStore {
+import static software.ulpgc.moneycalculator.application.webservice.ExchangeApi.seriesUrl;
 
-    private static final String HistoricalRatesApiUrl = "https://api.frankfurter.dev/v1/";
+public class WebServiceExchangeRateSeriesStore implements ExchangeRateSeriesStore {
 
     @Override
     public Stream<ExchangeRate> exchangeRatesBetween(Currency from, Currency to, LocalDate start, LocalDate end) {
         try {
-            return ratesIn(WebService.RateReader.readJsonIn(urlFrom(from, to, start, end)))
+            return ratesIn(GsonRateReader.readJsonIn(urlFrom(from, to, start, end)))
                     .map(e -> createExchangeRateWith(from, to, e));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -33,7 +32,7 @@ public class WebServiceExchangeRateSeriesStore implements ExchangeRateSeriesStor
                 LocalDate.parse(e.getKey()),
                 from,
                 to,
-                WebService.RateReader.doubleIn(e.getValue().getAsJsonObject())
+                GsonRateReader.doubleIn(e.getValue().getAsJsonObject())
         );
     }
 
@@ -42,8 +41,7 @@ public class WebServiceExchangeRateSeriesStore implements ExchangeRateSeriesStor
     }
 
     private URL urlFrom(Currency from, Currency to, LocalDate start, LocalDate end) throws MalformedURLException {
-        return new URL(HistoricalRatesApiUrl + start + ".." + end +
-                "?base=" + from.code() + "&symbols=" + to.code());
+        return seriesUrl(from, to, start, end);
     }
 
 }

@@ -15,6 +15,7 @@ import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 import software.ulpgc.moneycalculator.architecture.view.CurrencyQuery;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -58,21 +59,21 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(Main::closeConnections));
     }
 
-    private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) throws SQLException {
+    private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) throws SQLException, MalformedURLException {
         return new ExchangeMoneyCommand(
                 desktop.uiElementFactory().exchangeMoneyDialog(),
                 ratesIn(ratesConnection)
         );
     }
 
-    private static ExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) throws SQLException {
+    private static ExchangeMoneyCommand historicalExchangeMoneyCommand(Desktop desktop) throws SQLException, MalformedURLException {
         return new ExchangeMoneyCommand(
                 desktop.uiElementFactory().historicalExchangeMoneyDialog(),
                 ratesIn(ratesConnection)
         );
     }
 
-    private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) throws SQLException {
+    private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) throws SQLException, MalformedURLException {
         return new ViewHistoryCommand(
                 desktop.uiElementFactory().exchangeCurrencyDialog(),
                 new DatabaseExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
@@ -102,38 +103,38 @@ public class Main {
         return url.substring(url.lastIndexOf(":") + 1);
     }
 
-    private static CurrencyStore currenciesIn(String tableName) throws SQLException {
+    private static CurrencyStore currenciesIn(String tableName) throws SQLException, MalformedURLException {
         if (tableNonExistent(currencyConnection, tableName)) importCurrenciesInto(currencyConnection, tableName);
         return new DatabaseCurrencyStore(currencyConnection, tableName);
     }
 
-    private static ExchangeRateStore ratesIn(Connection connection) throws SQLException {
+    private static ExchangeRateStore ratesIn(Connection connection) throws SQLException, MalformedURLException {
         importRatesIfNeeded(connection);
         return new DatabaseExchangeRateStore(connection, currenciesIn(currenciesTable));
     }
 
-    private static void importCurrenciesInto(Connection connection, String tableName) throws SQLException {
+    private static void importCurrenciesInto(Connection connection, String tableName) throws SQLException, MalformedURLException {
         Stream<Currency> currencies = tableName.equals(currenciesTable) ?
                 WebServiceCurrencyStore.forCurrentCurrencies().currencies() :
                 WebServiceCurrencyStore.forHistoricalCurrencies().currencies();
         new DatabaseCurrencyRecorder(connection, tableName).record(currencies);
     }
 
-    private static void importRatesIfNeeded(Connection connection) throws SQLException {
+    private static void importRatesIfNeeded(Connection connection) throws SQLException, MalformedURLException {
         if (tableNonExistent(connection, ratesTable)) importAllRatesSince(LocalDate.of(1999, 1, 1));
         importMissingRates();
     }
 
-    private static void importMissingRates() throws SQLException {
+    private static void importMissingRates() throws SQLException, MalformedURLException {
         if (lastStoredDate().isEqual(LocalDate.now())) return;
         importAllRatesSince(lastStoredDate());
     }
 
-    private static void importAllRatesSince(LocalDate date) throws SQLException {
+    private static void importAllRatesSince(LocalDate date) throws SQLException, MalformedURLException {
         new DatabaseExchangeRateRecorder(ratesConnection).record(Stream.concat(pastRatesSince(date), currentRates()));
     }
 
-    private static Stream<ExchangeRate> pastRatesSince(LocalDate date) throws SQLException {
+    private static Stream<ExchangeRate> pastRatesSince(LocalDate date) throws SQLException, MalformedURLException {
         return currenciesIn(historicalCurrenciesTable).currencies()
                 .flatMap(c -> pastRatesSince(date, c));
     }
@@ -149,7 +150,7 @@ public class Main {
                 .mapToObj(i -> new ExchangeRate(date.plusDays(i), currentCurrenciesQuery.euro(), currentCurrenciesQuery.euro(), 1.0));
     }
 
-    private static Stream<ExchangeRate> currentRates() throws SQLException {
+    private static Stream<ExchangeRate> currentRates() throws SQLException, MalformedURLException {
         return currenciesIn(currenciesTable).currencies().map(c -> currentRates(currentCurrenciesQuery.euro(), c));
     }
 
@@ -157,7 +158,7 @@ public class Main {
         return new WebServiceExchangeRateStore().load(euro, toCurrency, LocalDate.now());
     }
 
-    private static LocalDate lastStoredDate() throws SQLException {
+    private static LocalDate lastStoredDate() throws SQLException, MalformedURLException {
         return new DatabaseExchangeRateStore(ratesConnection, currenciesIn(currenciesTable)).latestStoredDate();
     }
 

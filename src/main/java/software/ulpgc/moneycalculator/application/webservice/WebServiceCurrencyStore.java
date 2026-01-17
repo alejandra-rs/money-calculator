@@ -3,36 +3,33 @@ package software.ulpgc.moneycalculator.application.webservice;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import software.ulpgc.moneycalculator.application.custom.WebService;
 import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static software.ulpgc.moneycalculator.application.custom.WebService.apiKey;
+import static software.ulpgc.moneycalculator.application.webservice.ExchangeApi.*;
 
 public class WebServiceCurrencyStore implements CurrencyStore {
 
-    private static final String ExchangeRateApiUrl = "https://v6.exchangerate-api.com/v6/API-KEY/".replace("API-KEY", apiKey());
-    private static final String HistoricalRatesApiUrl = "https://api.frankfurter.dev/v1/";
+    private final URL currenciesUrl;
 
-    private final String currenciesUrl;
-
-    private WebServiceCurrencyStore(String apiUrl, String resource) {
-        this.currenciesUrl = apiUrl + resource;
+    private WebServiceCurrencyStore(URL url) {
+        this.currenciesUrl = url;
     }
 
-    public static WebServiceCurrencyStore forCurrentCurrencies() {
-        return new WebServiceCurrencyStore(ExchangeRateApiUrl, "codes");
+    public static WebServiceCurrencyStore forCurrentCurrencies() throws MalformedURLException {
+        return new WebServiceCurrencyStore(currentCurrenciesUrl());
     }
 
-    public static WebServiceCurrencyStore forHistoricalCurrencies() {
-        return new WebServiceCurrencyStore(HistoricalRatesApiUrl, "currencies");
+    public static WebServiceCurrencyStore forHistoricalCurrencies() throws MalformedURLException {
+        return new WebServiceCurrencyStore(historicalCurrenciesUrl());
     }
 
     @Override
@@ -45,7 +42,7 @@ public class WebServiceCurrencyStore implements CurrencyStore {
     }
 
     public Stream<Currency> readCurrencies() throws IOException {
-        return readCurrenciesIn(WebService.RateReader.readJsonIn(new URL(currenciesUrl)));
+        return readCurrenciesIn(GsonRateReader.readJsonIn(currenciesUrl));
     }
 
 
