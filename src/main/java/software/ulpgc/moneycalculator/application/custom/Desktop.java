@@ -7,6 +7,7 @@ import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
 import software.ulpgc.moneycalculator.architecture.ui.*;
+import software.ulpgc.moneycalculator.architecture.view.CurrencyQuery;
 import software.ulpgc.moneycalculator.architecture.viewmodel.LineChart;
 
 import javax.swing.*;
@@ -16,10 +17,8 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.awt.BorderLayout.*;
 import static java.awt.GridBagConstraints.RELATIVE;
@@ -44,20 +43,20 @@ public class Desktop extends JFrame {
 
     private final UiElementFactory uiElementFactory = new UiElementFactory();
     private final Map<String, Command> commands;
-    private final List<Currency> currencies, historicalCurrencies;
+    private final CurrencyQuery currencies, historicalCurrencies;
     private JTextField inputAmount, outputAmount;
     private JComboBox<Currency> inputCurrency, outputCurrency;
     private DatePicker inputDate, inputStartDate, inputEndDate;
     private final JPanel outputChart = new JPanel(new BorderLayout());
 
 
-    private Desktop(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) {
+    private Desktop(CurrencyQuery currencies, CurrencyQuery historicalCurrencies) {
         this.commands = new HashMap<>();
-        this.currencies = currencies.toList();
-        this.historicalCurrencies = historicalCurrencies.toList();
+        this.currencies = currencies;
+        this.historicalCurrencies = historicalCurrencies;
     }
 
-    public static Desktop with(Stream<Currency> currencies, Stream<Currency> historicalCurrencies) {
+    public static Desktop with(CurrencyQuery currencies, CurrencyQuery historicalCurrencies) {
         return new Desktop(currencies, historicalCurrencies);
     }
 
@@ -180,7 +179,7 @@ public class Desktop extends JFrame {
         return panel;
     }
 
-    private JPanel exchangePanelWith(List<Currency> currencies) {
+    private JPanel exchangePanelWith(CurrencyQuery currencies) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
         addToRow(panel, 0, inputAmount = amountInput(), nonOpaquePanel(new FlowLayout()), outputAmount = amountOutput());
@@ -429,16 +428,12 @@ public class Desktop extends JFrame {
             return dateSettings;
         }
 
-        public static JComboBox<Currency> currencySelectorWith(List<Currency> currencies) {
-            return DarkGreenTheme.forComboBox(new JComboBox<>(toArray(currencies)));
+        public static JComboBox<Currency> currencySelectorWith(CurrencyQuery currencies) {
+            return DarkGreenTheme.forComboBox(new JComboBox<>(currencies.all()));
         }
 
-        public static JComboBox<Currency> graphicsCurrencySelectorWith(List<Currency> currencies) {
-            return DarkGreenTheme.forGraphicsComboBox(new JComboBox<>(toArray(currencies)));
-        }
-
-        private static Currency[] toArray(List<Currency> currencies) {
-            return currencies.toArray(new Currency[0]);
+        public static JComboBox<Currency> graphicsCurrencySelectorWith(CurrencyQuery currencies) {
+            return DarkGreenTheme.forGraphicsComboBox(new JComboBox<>(currencies.all()));
         }
     }
 

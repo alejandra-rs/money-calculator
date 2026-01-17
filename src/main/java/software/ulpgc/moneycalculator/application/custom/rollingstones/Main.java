@@ -6,11 +6,13 @@ import software.ulpgc.moneycalculator.application.database.*;
 import software.ulpgc.moneycalculator.application.webservice.WebServiceCurrencyStore;
 import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
+import software.ulpgc.moneycalculator.architecture.control.SwapCurrenciesCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
 import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
 import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
+import software.ulpgc.moneycalculator.architecture.view.CurrencyQuery;
 
 import java.io.File;
 import java.sql.Connection;
@@ -33,7 +35,7 @@ public class Main {
     private static Connection currencyConnection;
     private static Connection ratesConnection;
 
-    private static Currency euro;
+    private static CurrencyQuery currentCurrenciesQuery;
 
     public static void main(String[] args) throws Exception {
 
@@ -43,25 +45,23 @@ public class Main {
         currencyConnection.setAutoCommit(false);
         ratesConnection.setAutoCommit(false);
 
-        euro = currenciesIn(historicalCurrenciesTable).currencies()
-                .filter(c -> c.code().equals("EUR"))
-                .findFirst().orElse(Currency.Null);
+        currentCurrenciesQuery = new CurrencyQuery(currenciesIn(currenciesTable));
 
-        Desktop desktop = Desktop.with(currenciesIn(currenciesTable).currencies(),
-                                       currenciesIn(historicalCurrenciesTable).currencies());
+        Desktop desktop = Desktop.with(currentCurrenciesQuery, new CurrencyQuery(currenciesIn(historicalCurrenciesTable)));
 
         desktop.addCommand("exchange", exchangeMoneyCommand(desktop))
                 .addCommand("historicalExchange", historicalExchangeMoneyCommand(desktop))
                 .addCommand("generateGraphics", viewHistoryCommand(desktop))
+                .addCommand("swapCurrencies", swapCurrenciesCommand(desktop))
                 .generateUi().setVisible(true);
 
         Runtime.getRuntime().addShutdownHook(new Thread(Main::closeConnections));
     }
 
-    private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) throws SQLException {
-        return new ViewHistoryCommand(
-                desktop.uiElementFactory().exchangeCurrencyDialog(),
-                new DatabaseExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
+    private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) throws SQLException {
+        return new ExchangeMoneyCommand(
+                desktop.uiElementFactory().exchangeMoneyDialog(),
+                ratesIn(ratesConnection)
         );
     }
 
@@ -72,11 +72,15 @@ public class Main {
         );
     }
 
-    private static ExchangeMoneyCommand exchangeMoneyCommand(Desktop desktop) throws SQLException {
-        return new ExchangeMoneyCommand(
-                desktop.uiElementFactory().exchangeMoneyDialog(),
-                ratesIn(ratesConnection)
+    private static ViewHistoryCommand viewHistoryCommand(Desktop desktop) throws SQLException {
+        return new ViewHistoryCommand(
+                desktop.uiElementFactory().exchangeCurrencyDialog(),
+                new DatabaseExchangeRateSeriesStore(ratesConnection, currenciesIn(currenciesTable))
         );
+    }
+
+    private static SwapCurrenciesCommand swapCurrenciesCommand(Desktop desktop) {
+        return new SwapCurrenciesCommand(desktop.uiElementFactory().currencyPanel());
     }
 
 
@@ -135,18 +139,18 @@ public class Main {
     }
 
     private static Stream<ExchangeRate> pastRatesSince(LocalDate date, Currency c) {
-        return c.equals(euro) ? getEuroStream(date) :
+        return c.equals(currentCurrenciesQuery.euro()) ? getEuroStream(date) :
                                 new WebServiceExchangeRateSeriesStore()
-                                        .exchangeRatesBetween(euro, c, date, LocalDate.now().minusDays(1));
+                                        .exchangeRatesBetween(currentCurrenciesQuery.euro(), c, date, LocalDate.now().minusDays(1));
     }
 
     private static Stream<ExchangeRate> getEuroStream(LocalDate date) {
         return LongStream.range(0, LocalDate.now().toEpochDay() - date.toEpochDay())
-                .mapToObj(i -> new ExchangeRate(date.plusDays(i), euro, euro, 1.0));
+                .mapToObj(i -> new ExchangeRate(date.plusDays(i), currentCurrenciesQuery.euro(), currentCurrenciesQuery.euro(), 1.0));
     }
 
     private static Stream<ExchangeRate> currentRates() throws SQLException {
-        return currenciesIn(currenciesTable).currencies().map(c -> currentRates(euro, c));
+        return currenciesIn(currenciesTable).currencies().map(c -> currentRates(currentCurrenciesQuery.euro(), c));
     }
 
     private static ExchangeRate currentRates(Currency euro, Currency toCurrency) {

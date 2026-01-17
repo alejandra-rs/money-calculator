@@ -1,9 +1,10 @@
 package software.ulpgc.moneycalculator.application.database;
 
-import software.ulpgc.moneycalculator.application.custom.Database;
+import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
 import software.ulpgc.moneycalculator.architecture.io.ExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
+import software.ulpgc.moneycalculator.architecture.view.CurrencyQuery;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,12 +19,12 @@ public class DatabaseExchangeRateStore implements ExchangeRateStore {
 
     private final Connection connection;
     private final PreparedStatement preparedStatement;
-    private final Database.ExchangeRateReader reader;
+    private final CurrencyQuery query;
 
-    public DatabaseExchangeRateStore(Connection connection, software.ulpgc.moneycalculator.architecture.io.CurrencyStore store) throws SQLException {
+    public DatabaseExchangeRateStore(Connection connection, CurrencyStore store) throws SQLException {
         this.connection = connection;
         this.preparedStatement = connection.prepareStatement("SELECT * FROM exchangeRates WHERE date = ? AND toCurrency = ?");
-        this.reader = new Database.ExchangeRateReader(store);
+        this.query = new CurrencyQuery(store);
     }
 
     @Override
@@ -59,11 +60,20 @@ public class DatabaseExchangeRateStore implements ExchangeRateStore {
 
     private ExchangeRate exchangeRateIn(ResultSet resultSet) {
         try {
-            ExchangeRate exchangeRate = resultSet.next() ? reader.readExchangeRateIn(resultSet) : ExchangeRate.Null;
+            ExchangeRate exchangeRate = resultSet.next() ? readExchangeRateIn(resultSet) : ExchangeRate.Null;
             resultSet.close();
             return exchangeRate;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ExchangeRate readExchangeRateIn(ResultSet resultSet) throws SQLException {
+        return new ExchangeRate(
+                dateOf(resultSet.getString(1)),
+                query.euro(),
+                query.currencyWith(resultSet.getString(2)),
+                resultSet.getDouble(3)
+        );
     }
 }

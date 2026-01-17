@@ -1,9 +1,10 @@
 package software.ulpgc.moneycalculator.application.database;
 
-import software.ulpgc.moneycalculator.application.custom.Database;
+import software.ulpgc.moneycalculator.architecture.io.CurrencyStore;
 import software.ulpgc.moneycalculator.architecture.io.ExchangeRateSeriesStore;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
+import software.ulpgc.moneycalculator.architecture.view.CurrencyQuery;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,18 +14,19 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static software.ulpgc.moneycalculator.application.custom.Database.DateParser.dateOf;
 import static software.ulpgc.moneycalculator.application.custom.Database.ExchangeRateMerger.mergeExchangeRates;
 
 public class DatabaseExchangeRateSeriesStore implements ExchangeRateSeriesStore {
 
     private final Connection connection;
     private final String preparedStatement;
-    private final Database.ExchangeRateReader reader;
+    private final CurrencyQuery query;
 
-    public DatabaseExchangeRateSeriesStore(Connection connection, software.ulpgc.moneycalculator.architecture.io.CurrencyStore store) {
+    public DatabaseExchangeRateSeriesStore(Connection connection, CurrencyStore store) {
         this.connection = connection;
         this.preparedStatement = "SELECT * FROM exchangeRates WHERE toCurrency = ? AND date BETWEEN ? AND ?";
-        this.reader = new Database.ExchangeRateReader(store);
+        this.query = new CurrencyQuery(store);
     }
 
     @Override
@@ -50,10 +52,19 @@ public class DatabaseExchangeRateSeriesStore implements ExchangeRateSeriesStore 
     private ExchangeRate nextCompoundRateIn(ResultSet fromRs, ResultSet toRs) {
         try {
             if (!fromRs.next() || !toRs.next()) return null;
-            return mergeExchangeRates(reader.readExchangeRateIn(fromRs), reader.readExchangeRateIn(toRs));
+            return mergeExchangeRates(readExchangeRateIn(fromRs), readExchangeRateIn(toRs));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ExchangeRate readExchangeRateIn(ResultSet resultSet) throws SQLException {
+        return new ExchangeRate(
+                dateOf(resultSet.getString(1)),
+                query.euro(),
+                query.currencyWith(resultSet.getString(2)),
+                resultSet.getDouble(3)
+        );
     }
 
     private ResultSet resultSetIn(PreparedStatement statement) {

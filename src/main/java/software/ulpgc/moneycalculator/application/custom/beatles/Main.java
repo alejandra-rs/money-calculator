@@ -7,12 +7,13 @@ import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeR
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.SwapCurrenciesCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
+import software.ulpgc.moneycalculator.architecture.view.CurrencyQuery;
 
 public class Main {
     public static void main(String[] args) throws Exception {
 
-        Desktop desktop = Desktop.with(WebServiceCurrencyStore.forCurrentCurrencies().currencies(),
-                                       WebServiceCurrencyStore.forHistoricalCurrencies().currencies());
+        Desktop desktop = Desktop.with(new CurrencyQuery(WebServiceCurrencyStore.forCurrentCurrencies()),
+                                       new CurrencyQuery(WebServiceCurrencyStore.forHistoricalCurrencies()));
 
         desktop.addCommand("exchange", exchangeMoneyCommand(desktop))
                 .addCommand("historicalExchange", historicalExchangeMoneyCommand(desktop))
