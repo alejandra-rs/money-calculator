@@ -1,7 +1,9 @@
 package software.ulpgc.moneycalculator.application.custom.beatles;
 
 import software.ulpgc.moneycalculator.application.custom.Desktop;
-import software.ulpgc.moneycalculator.application.custom.WebService;
+import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeRateSeriesStore;
+import software.ulpgc.moneycalculator.application.webservice.WebServiceCurrencyStore;
+import software.ulpgc.moneycalculator.application.webservice.WebServiceExchangeRateStore;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.HistoricalExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
@@ -9,8 +11,8 @@ import software.ulpgc.moneycalculator.architecture.control.ViewHistoryCommand;
 public class Main {
     public static void main(String[] args) throws Exception {
 
-        Desktop desktop = Desktop.with(WebService.CurrencyStore.forCurrentCurrencies().currencies(),
-                                       WebService.CurrencyStore.forHistoricalCurrencies().currencies());
+        Desktop desktop = Desktop.with(WebServiceCurrencyStore.forCurrentCurrencies().currencies(),
+                                       WebServiceCurrencyStore.forHistoricalCurrencies().currencies());
 
         desktop.addCommand("exchange", exchangeMoneyCommand(desktop))
                 .addCommand("historicalExchange", historicalExchangeMoneyCommand(desktop))
@@ -23,7 +25,7 @@ public class Main {
         return new ExchangeMoneyCommand(
                 desktop.uiElementFactory().moneyDialog(),
                 desktop.uiElementFactory().outputCurrencyDialog(),
-                new WebService.ExchangeRateStore(),
+                new WebServiceExchangeRateStore(),
                 desktop.uiElementFactory().moneyDisplay()
         );
     }
@@ -33,7 +35,7 @@ public class Main {
                 desktop.uiElementFactory().moneyDialog(),
                 desktop.uiElementFactory().outputCurrencyDialog(),
                 desktop.uiElementFactory().inputDateDialog(),
-                new WebService.ExchangeRateStore(),
+                new WebServiceExchangeRateStore(),
                 desktop.uiElementFactory().moneyDisplay()
         );
     }
@@ -45,7 +47,7 @@ public class Main {
                 desktop.uiElementFactory().inputCurrencyDialog(),
                 desktop.uiElementFactory().outputCurrencyDialog(),
                 desktop.uiElementFactory().lineChartDisplay(),
-                new WebService.ExchangeRateSeriesStore()
+                new WebServiceExchangeRateSeriesStore()
         );
     }
 }

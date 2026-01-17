@@ -76,7 +76,7 @@ public class Desktop extends JFrame {
 
     private Desktop setWindowProperties() {
         this.setTitle("Money Calculator");
-        this.setIconImage(new ImageIcon(Main.class.getResource("/moneycalculator.png")).getImage());
+        this.setIconImage(new ImageIcon(Desktop.class.getResource("/moneycalculator.png")).getImage());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(800,500);
         this.setResizable(false);
