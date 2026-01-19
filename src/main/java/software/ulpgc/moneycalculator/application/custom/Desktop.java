@@ -49,7 +49,6 @@ public class Desktop extends JFrame {
     private DatePicker inputDate, inputStartDate, inputEndDate;
     private final JPanel outputChart = new JPanel(new BorderLayout());
 
-
     private Desktop(CurrencyQuery currencies, CurrencyQuery historicalCurrencies) {
         this.commands = new HashMap<>();
         this.currencies = currencies;
@@ -70,7 +69,6 @@ public class Desktop extends JFrame {
         this.setWindowProperties().setLayout(new BorderLayout());
         loadMode(Mode.CURRENT);
         return this;
-
     }
 
     private Desktop setWindowProperties() {
@@ -82,7 +80,6 @@ public class Desktop extends JFrame {
         this.setLocationRelativeTo(null);
         return this;
     }
-
 
     private void clear() {
         this.getContentPane().removeAll();
@@ -215,12 +212,12 @@ public class Desktop extends JFrame {
     }
 
     private void exchangeMoney() {
-        if (uiElementFactory.inputAmount() == 0) showErrorPanel("Please introduce a valid amount of money.");
+        if (uiElementFactory.inputAmount() <= 0) showErrorPanel("Please introduce a valid amount of money.");
         else commands.get("exchange").execute();
     }
 
     private void exchangeHistoricalMoney() {
-        if (uiElementFactory.inputAmount() == 0) showErrorPanel("Please introduce a valid amount of money.");
+        if (uiElementFactory.inputAmount() <= 0) showErrorPanel("Please introduce a valid amount of money.");
         else commands.get("historicalExchange").execute();
     }
 

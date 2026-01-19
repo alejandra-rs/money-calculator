@@ -15,7 +15,7 @@ import static software.ulpgc.moneycalculator.application.webservice.GsonRateRead
 
 public class WebServiceExchangeRateStore implements ExchangeRateStore {
 
-    private final static String JsonConversionRateKey = "conversion_rates";
+    private final static String JsonConversionRateKey = "conversion_rate";
 
     @Override
     public ExchangeRate load(Currency from, Currency to, LocalDate date) {
