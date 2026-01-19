@@ -41,6 +41,13 @@ The project follows **Clean Code** and **SOLID** principles. Some of the strateg
 
 ---
 
+## How to Run
+1. Place a valid  [*ExchangeRate-API*](https://www.exchangerate-api.com/) Key in `src/main/resources/api-key.txt`.
+2. Run the desired `Main`
+3. If the database implementation is selected, the application will initialize `currencies.db` and `rates.db` automatically. Otherwise, it will connect to said APIs to fetch the data.
+
+---
+
 ## Technical Stack
 
 * **Language:** Java 17+
@@ -52,7 +59,6 @@ The project follows **Clean Code** and **SOLID** principles. Some of the strateg
 
 ---
 
-### How to Run
-1. Place a valid  [*ExchangeRate-API*](https://www.exchangerate-api.com/) Key in `src/main/resources/api-key.txt`.
-2. Run the desired `Main`
-3. If the database implementation is selected, the application will initialize `currencies.db` and `rates.db` automatically. Otherwise, it will connect to said APIs to fetch the data.
+## Acknowledgements
+
+Uicons by <a href="https://www.flaticon.com/uicons">Flaticon</a>.
